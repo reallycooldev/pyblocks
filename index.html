@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PyBlocks Studio V4</title>
+  <title>PyBlocks Studio V5</title>
   <script src="skulpt.min.js"></script>
   <script src="skulpt-stdlib.js"></script>
   <style>
@@ -37,6 +37,24 @@
       --out-bg: #0c0202; --out-text: #f87171; --border: #450a0a;
       --hole-bg: #fee2e2; --hole-border: transparent;
     }
+    [data-theme="purple"] {
+      --bg: #130924; --panel: #1c0e36; --bar: #28154d; --tip: #211140;
+      --text: #f3e8ff; --muted: #c084fc; --accent: #d8b4fe; --code: #fae8ff;
+      --out-bg: #0b0417; --out-text: #e879f9; --border: #4c1d95;
+      --hole-bg: #f3e8ff; --hole-border: transparent;
+    }
+    [data-theme="ocean"] {
+      --bg: #041b24; --panel: #072733; --bar: #0b3647; --tip: #092e3d;
+      --text: #ccfbf1; --muted: #5eead4; --accent: #2dd4bf; --code: #e0f2fe;
+      --out-bg: #021017; --out-text: #34d399; --border: #115e59;
+      --hole-bg: #ccfbf1; --hole-border: transparent;
+    }
+    [data-theme="amber"] {
+      --bg: #171004; --panel: #241806; --bar: #332209; --tip: #2b1d07;
+      --text: #fef3c7; --muted: #fbbf24; --accent: #f59e0b; --code: #fde68a;
+      --out-bg: #0d0802; --out-text: #fcd34d; --border: #78350f;
+      --hole-bg: #fef3c7; --hole-border: transparent;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: sans-serif; background: var(--bg); color: var(--text);
@@ -52,6 +70,7 @@
     .btn-dark:hover { filter: brightness(1.15); }
     .btn-learn { background: #8aadf4; color: #111; }
     .btn-pass { background: #a6da95 !important; color: #111 !important; border-color: #a6da95 !important; }
+    .btn-stop { background: #ed8796 !important; color: #111 !important; }
     .main { display: flex; flex: 1; overflow: hidden; }
     .side {
       width: 245px; background: var(--panel); display: flex;
@@ -158,7 +177,7 @@
   <header>
     <div class="row">
       <button class="btn-dark" onclick="side.classList.toggle('hidden')">☰ Blocks</button>
-      <strong style="color:var(--accent)">PyBlocks V4</strong>
+      <strong style="color:var(--accent)">PyBlocks V5</strong>
       <button class="btn-learn" id="learnToggle" onclick="toggleLearn()">🎓 Learn (0/48)</button>
     </div>
     <div class="row">
@@ -332,7 +351,7 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
       [5,"T","6.8 FINAL BOSS TEST (No Hints)","Draw a hexagon (6 sides) using a for loop where each side is 60 steps long and each turn is 60 degrees.","","",[], "TURTLE:for,60"]
     ];
 
-    const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"]];
+    const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"],["purple", "Theme: Purple"],["ocean","Theme: Ocean"],["amber","Theme: Amber"]];
     let themeIdx = 0, curStg = 0, fontSize = 16;
     let completed = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
 
@@ -573,6 +592,62 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
     }
 
     ed.addEventListener("input", syncEditor);
+    const pairs = { "(": ")", "[": "]", '"': '"', "'": "'" };
+    const closers = new Set([")", "]", '"', "'"]);
+    ed.addEventListener("beforeinput", e => {
+      if (e.inputType !== "insertText" || (!pairs[e.data] && !closers.has(e.data))) return;
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+
+      const getLinePart = isBefore => {
+        const r = range.cloneRange();
+        r.selectNodeContents(ed);
+        if (isBefore) r.setEnd(range.startContainer, range.startOffset);
+        else r.setStart(range.endContainer, range.endOffset);
+        const tmp = document.createElement("div");
+        tmp.appendChild(r.cloneContents());
+        tmp.innerHTML = tmp.innerHTML.replace(/<br\s*\/?>/gi, "\n").replace(/<\/div>|<div[^>]*>/gi, "\n");
+        const parts = tmp.textContent.replace(/\u00a0/g, " ").split("\n");
+        return isBefore ? parts.pop() : parts.at(0);
+      };
+
+      const lineBefore = getLinePart(true);
+      const lineAfter = getLinePart(false);
+
+      if (closers.has(e.data) && lineAfter.startsWith(e.data)) {
+        e.preventDefault();
+        sel.modify("move", "forward", "character");
+        return;
+      }
+
+      if (!pairs[e.data]) return;
+
+      let activeQuote = null;
+      for (let i = 0; i < lineBefore.length; i++) {
+        const ch = lineBefore[i];
+        if ((ch === '"' || ch === "'") && lineBefore[i - 1] !== "\\") {
+          if (activeQuote === null) activeQuote = ch;
+          else if (activeQuote === ch) activeQuote = null;
+        }
+      }
+      if (activeQuote !== null) return;
+      if ((e.data === '"' || e.data === "'") && (lineAfter.startsWith('"') || lineAfter.startsWith("'"))) return;
+
+      e.preventDefault();
+      const selected = range.toString();
+      range.deleteContents();
+      const openNode = document.createTextNode(e.data + selected);
+      const closeNode = document.createTextNode(pairs[e.data]);
+      range.insertNode(closeNode);
+      range.insertNode(openNode);
+      range.setStartAfter(openNode);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      syncEditor();
+    });
+
     ed.addEventListener("keydown", e => {
       if (e.key === "Tab") {
         e.preventDefault();
@@ -589,7 +664,7 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
         const textBefore = preRange.toString().replace(/\u00a0/g, " ");
         const currentLine = textBefore.split("\n").pop();
         const indentMatch = currentLine.match(/^\s*/);
-        const indent = indentMatch ? indentMatch[0] : "";
+        const indent = indentMatch ? indentMatch.at(0) : "";
         const extra = currentLine.trim().endsWith(":") ? "    " : "";
         document.execCommand("insertText", false, "\n" + indent + extra);
         syncEditor();
@@ -624,13 +699,25 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
       return Sk.builtinFiles["files"][x];
     }
 
+    let isRunning = false, stopFlag = false;
+    const runBtn = document.getElementById("run");
+
+    function setRunning(state) {
+      isRunning = state;
+      runBtn.textContent = state ? "Stop" : "Run";
+      runBtn.classList.toggle("btn-stop", state);
+    }
+
     function go(isGrading = false, mockInputs = [], expected = "") {
+      if (isRunning) { stopFlag = true; tip.textContent = "Stopping script..."; return; }
       if (typeof Sk === "undefined") { out.textContent = "Missing skulpt files."; return; }
       if (ed.querySelector(".hole:empty")) { out.textContent = "Tip: Fill in all white boxes first!"; return; }
 
       const cleanCode = ed.innerText.replace(/\u00a0/g, " ");
       const usesTurtle = /\bturtle\b/.test(cleanCode);
       let capturedOut = "";
+      stopFlag = false;
+      setRunning(true);
       out.textContent = "";
       tbox.innerHTML = "";
       tbox.style.display = usesTurtle ? "block" : "none";
@@ -640,7 +727,12 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
       Sk.configure({
         output: text => { out.textContent += text; capturedOut += text; },
         read: builtinRead,
+        yieldLimit: 100,
+        execLimit: 30000,
+        killableWhile: true,
+        killableFor: true,
         inputfun: promptText => {
+          if (stopFlag) throw "Stopped by user";
           if (isGrading) {
             if (mockInputs.length === 0) throw "Program asked for too many inputs!";
             const val = mockInputs.shift();
@@ -657,8 +749,10 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
       });
 
       Sk.misceval.asyncToPromise(() =>
-        Sk.importMainWithBody("<stdin>", false, cleanCode, true)
+        Sk.importMainWithBody("<stdin>", false, cleanCode, true),
+        { "*": () => { if (stopFlag) throw "Stopped by user"; } }
       ).then(() => {
+        setRunning(false);
         if (isGrading) {
           let passed = false;
           if (expected.startsWith("TURTLE:")) {
@@ -681,7 +775,8 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
           }
         }
       }).catch(err => {
-        out.textContent += "\nError: " + err.toString();
+        setRunning(false);
+        out.textContent += "\n" + (stopFlag ? "🛑 Stopped by user." : "Error: " + err.toString());
       });
     }
   </script>
