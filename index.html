@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyBlocks Studio V4</title>
+  <script src="skulpt.min.js"></script>
+  <script src="skulpt-stdlib.js"></script>
+  <style>
+    :root {
+      --bg: #1e1e2e; --panel: #181825; --bar: #24273a; --tip: #202336;
+      --text: #cad3f5; --muted: #8087a2; --accent: #8aadf4; --code: #f4dbd6;
+      --out-bg: #11111b; --out-text: #a6da95; --border: #363a4f;
+      --hole-bg: #ffffff; --hole-border: transparent;
+    }
+    [data-theme="midnight"] {
+      --bg: #000000; --panel: #09090b; --bar: #121216; --tip: #0e0e12;
+      --text: #e4e4e7; --muted: #71717a; --accent: #38bdf8; --code: #f8fafc;
+      --out-bg: #000000; --out-text: #4ade80; --border: #27272a;
+      --hole-bg: #ffffff; --hole-border: transparent;
+    }
+    [data-theme="light"] {
+      --bg: #ffffff; --panel: #f1f5f9; --bar: #e2e8f0; --tip: #f8fafc;
+      --text: #0f172a; --muted: #475569; --accent: #2563eb; --code: #1e293b;
+      --out-bg: #f8fafc; --out-text: #15803d; --border: #cbd5e1;
+      --hole-bg: #cbd5e1; --hole-border: #64748b;
+    }
+    [data-theme="matrix"] {
+      --bg: #020802; --panel: #041004; --bar: #071a07; --tip: #051405;
+      --text: #00ff41; --muted: #008f11; --accent: #00ff41; --code: #00ff41;
+      --out-bg: #000000; --out-text: #00ff41; --border: #003b00;
+      --hole-bg: #00ff41; --hole-border: transparent;
+    }
+    [data-theme="red"] {
+      --bg: #140505; --panel: #1f0707; --bar: #2b0a0a; --tip: #240808;
+      --text: #fee2e2; --muted: #f87171; --accent: #ef4444; --code: #fca5a5;
+      --out-bg: #0c0202; --out-text: #f87171; --border: #450a0a;
+      --hole-bg: #fee2e2; --hole-border: transparent;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif; background: var(--bg); color: var(--text);
+      height: 100vh; display: flex; flex-direction: column;
+    }
+    header {
+      background: var(--panel); padding: 8px 12px; display: flex;
+      justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap;
+    }
+    .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .btn-dark { background: var(--bar); color: var(--text); border: 1px solid var(--border); }
+    .btn-dark:hover { filter: brightness(1.15); }
+    .btn-learn { background: #8aadf4; color: #111; }
+    .btn-pass { background: #a6da95 !important; color: #111 !important; border-color: #a6da95 !important; }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    .side {
+      width: 245px; background: var(--panel); display: flex;
+      flex-direction: column; border-right: 1px solid var(--border);
+    }
+    .side.hidden { display: none; }
+    .search-box { padding: 8px; border-bottom: 1px solid var(--border); }
+    .search-box input {
+      width: 100%; padding: 6px 9px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text); font-size: 0.84rem; outline: none;
+    }
+    .menu-list { flex: 1; padding: 8px; overflow-y: auto; }
+    .blk {
+      background: var(--bar); border-left: 4px solid var(--accent);
+      padding: 7px 8px; margin-bottom: 7px; border-radius: 4px;
+      cursor: pointer; font-size: 0.84rem; user-select: none;
+    }
+    .blk:hover { filter: brightness(1.12); }
+    .blk small {
+      display: block; color: var(--muted); font-family: monospace;
+      margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .work { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .tip {
+      background: var(--tip); padding: 6px 12px; font-size: 0.84rem;
+      border-bottom: 1px solid var(--border); color: var(--accent);
+    }
+    .learn-panel {
+      display: none; background: var(--panel); border-bottom: 2px solid var(--accent);
+      padding: 10px 14px; max-height: 45vh; overflow-y: auto;
+    }
+    .learn-panel.open { display: block; }
+    .learn-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .b-learn { background: #8aadf4; color: #111; }
+    .b-code { background: #a6da95; color: #111; }
+    .b-test { background: #ed8796; color: #111; }
+    .learn-body { font-size: 0.9rem; line-height: 1.45; margin-bottom: 8px; }
+    .learn-code {
+      background: var(--out-bg); color: var(--code); padding: 8px 10px;
+      border-radius: 4px; font-family: monospace; font-size: 0.85rem;
+      white-space: pre-wrap; margin: 6px 0; border: 1px solid var(--border);
+    }
+    .hint-box {
+      display: none; background: var(--bar); border-left: 3px solid #eed49f;
+      padding: 7px 10px; margin: 6px 0; font-size: 0.84rem; color: #eed49f;
+    }
+    .cols { display: flex; flex: 1; overflow: hidden; }
+    .col {
+      flex: 1; display: flex; flex-direction: column;
+      border-right: 1px solid var(--border); min-height: 150px; overflow: hidden;
+    }
+    .bar {
+      background: var(--bar); padding: 5px 10px; display: flex;
+      justify-content: space-between; align-items: center;
+      font-size: 0.83rem; border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap;
+    }
+    button, select {
+      background: #a6da95; color: #111; border: none; padding: 5px 8px;
+      border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.78rem;
+    }
+    .ed-wrap {
+      flex: 1; display: flex; background: var(--bg); overflow-y: auto;
+      font-family: monospace; font-size: 16px; line-height: 1.55;
+    }
+    .gutter {
+      padding: 12px 8px; text-align: right; color: var(--muted);
+      background: var(--panel); border-right: 1px solid var(--border);
+      user-select: none; min-width: 36px; white-space: pre;
+    }
+    .editor {
+      flex: 1; color: var(--code); padding: 12px; outline: none;
+      white-space: pre; overflow-x: auto; tab-size: 4; min-height: 100%;
+    }
+    .hole:empty {
+      display: inline-block; min-width: 48px; height: 1.2em;
+      background: var(--hole-bg); border: 1px solid var(--hole-border);
+      border-radius: 3px; vertical-align: text-bottom; margin: 0 2px; cursor: text;
+    }
+    .hole:not(:empty) { background: transparent; color: var(--code); border: none; }
+    .out-wrap {
+      flex: 1; display: flex; flex-direction: column;
+      background: var(--out-bg); overflow-y: auto;
+    }
+    #tbox {
+      display: none; text-align: center; background: #ffffff;
+      border-bottom: 2px solid var(--border); padding: 6px; overflow: hidden;
+    }
+    #tbox canvas { margin: 0 auto; }
+    pre {
+      flex: 1; color: var(--out-text); padding: 12px;
+      font-family: monospace; white-space: pre-wrap; line-height: 1.4;
+    }
+    @media (max-width: 768px) {
+      body { height: auto; min-height: 100vh; }
+      .main, .cols { flex-direction: column; overflow: visible; }
+      .side { width: 100%; max-height: 210px; border-right: none; border-bottom: 1px solid var(--border); }
+      .ed-wrap, .out-wrap { min-height: 190px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <button class="btn-dark" onclick="side.classList.toggle('hidden')">☰ Blocks</button>
+      <strong style="color:var(--accent)">PyBlocks V4</strong>
+      <button class="btn-learn" id="learnToggle" onclick="toggleLearn()">🎓 Learn (0/48)</button>
+    </div>
+    <div class="row">
+      <select id="exSel" class="btn-dark" onchange="loadExample(this.value)">
+        <option value="">Examples...</option>
+        <option value="0">1. Rainbow Vortex</option>
+        <option value="1">2. Number Guessing Game</option>
+        <option value="2">3. Countdown Timer</option>
+      </select>
+      <button class="btn-dark" id="themeBtn" onclick="cycleTheme()">Theme: Blue</button>
+      <span id="st" style="font-size:0.78rem">Checking...</span>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="side" id="side">
+      <div class="search-box">
+        <input id="search" type="text" placeholder="Search functions..." oninput="renderMenu(this.value)">
+      </div>
+      <div class="menu-list" id="menu"></div>
+    </div>
+
+    <div class="work">
+      <div class="learn-panel" id="learnPanel">
+        <div class="learn-top">
+          <div class="row">
+            <select id="secSel" class="btn-dark" onchange="pickStage(this.value * 8)"></select>
+            <select id="stgSel" class="btn-dark" onchange="pickStage(parseInt(this.value,10))"></select>
+            <span id="stgBadge" class="badge b-learn">LEARN</span>
+          </div>
+          <div class="row">
+            <button class="btn-dark" onclick="pickStage(curStg - 1)">◀ Prev</button>
+            <button class="btn-dark" id="nextBtn" onclick="pickStage(curStg + 1)">Next ▶</button>
+            <button class="btn-dark" onclick="resetProgress()" title="Reset all progress">↺ Reset</button>
+            <button class="btn-dark" onclick="toggleLearn()">✕</button>
+          </div>
+        </div>
+        <div class="learn-body" id="stgDesc"></div>
+        <div class="learn-code" id="stgEx" style="display:none"></div>
+        <div class="hint-box" id="hintBox"></div>
+        <div class="row">
+          <button class="btn-dark" id="loadTryBtn" onclick="loadStageStarter()">Load Starter Code</button>
+          <button class="btn-dark" id="hintBtn" onclick="showHint()">💡 Show Hint</button>
+          <button id="markBtn" onclick="markStage()">✅ Mark / Complete</button>
+        </div>
+      </div>
+
+      <div class="tip" id="tip">Auto-save is active! Tap Learn for 48 Python stages.</div>
+      <div class="cols">
+        <div class="col">
+          <div class="bar">
+            <div class="row">
+
+              <span>main.py</span>
+              <button class="btn-dark" onclick="changeFont(-2)">A-</button>
+              <button class="btn-dark" onclick="changeFont(2)">A+</button>
+            </div>
+            <div class="row">
+              <input type="file" id="fileIn" hidden onchange="loadPy(event)">
+              <button class="btn-dark" onclick="fileIn.click()">Open</button>
+              <button class="btn-dark" onclick="savePy()">Save</button>
+
+              <button id="run" onclick="go(false)">Run</button>
+            </div>
+          </div>
+          <div class="ed-wrap" id="edWrap">
+            <div class="gutter" id="gutter">1</div>
+            <div id="ed" class="editor" contenteditable="true" spellcheck="false" autocapitalize="none" autocomplete="off">import random
+name = input("What is your name? ")
+lucky = random.randint(1, 100)
+print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="bar">
+            <span>Output</span>
+            <div class="row">
+              <button class="btn-dark" id="pngBtn" style="display:none" onclick="savePng()">Save PNG</button>
+              <button class="btn-dark" onclick="clearOut()">Clear</button>
+            </div>
+          </div>
+          <div class="out-wrap">
+            <div id="tbox"></div>
+            <pre id="out">Ready!</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const blocks = [
+      ["Print", "print([BOX])", "Shows text or variables in the output."],
+      ["Input", "[BOX] = input([BOX])", "Asks the user for text."],
+      ["Number Input", "[BOX] = int(input([BOX]))", "Asks the user for a whole number."],
+      ["Variables", "[BOX] = [BOX]", "Stores text, numbers, or lists."],
+      ["Random Number", "import random\n[BOX] = random.randint([BOX], [BOX])", "Picks a random whole number."],
+      ["Random Choice", "import random\n[BOX] = random.choice([BOX])", "Picks a random item from a list."],
+      ["Turtle Setup", "import turtle\nt = turtle.Turtle()\nt.speed(5)", "Creates a turtle pen for drawing."],
+      ["Turtle Move & Turn", "t.forward([BOX])\nt.right([BOX])", "Moves forward and turns right (degrees)."],
+      ["Turtle Color & Pen", "t.color([BOX])\nt.pensize([BOX])", "Changes pen color and thickness."],
+      ["Turtle Square", "import turtle\nt = turtle.Turtle()\nfor i in range(4):\n    t.forward(80)\n    t.right(90)", "Draws a ready-made square."],
+      ["List Length len()", "print(len([BOX]))", "Counts items in a list or string."],
+      [".capitalize()", "[BOX].capitalize()", "Makes the first letter uppercase."],
+      [".split()", "[BOX].split([BOX])", "Breaks a string into a list."],
+      [".replace()", "[BOX].replace([BOX], [BOX])", "Swaps matching text."],
+      [".upper() / .lower()", "[BOX].upper()", "Changes text to ALL UPPERCASE."],
+      ["for i in range", "for i in range([BOX]):\n    print(i)", "Repeats code a set number of times."],
+      ["Loop List", "for [BOX] in [BOX]:\n    print([BOX])", "Steps through each item in a list."],
+      ["while Loop", "while [BOX]:\n    [BOX]", "Repeats while condition is True."],
+      ["if / else", "if [BOX]:\n    [BOX]\nelse:\n    [BOX]", "Makes decisions with conditions."],
+      ["List .append()", "[BOX].append([BOX])", "Adds a new item to a list."],
+      ["def Function", "def [BOX]([BOX]):\n    return [BOX]", "Creates a reusable function."]
+    ];
+    
+    const sections = ["1: Print & Input", "2: Variables & Math", "3: Strings", "4: Decisions (If)", "5: Loops & Lists", "6: Turtle Art"];
+    const course = [
+      [0,"L","1.1 Printing Text","Use print() with quotes around text to display messages on screen.","print('Hello World!')","",[],""],
+      [0,"C","1.2 Challenge: Greeting","Print the exact message: Welcome to Python","","Put quotes inside print('Welcome to Python')",[], "Welcome to Python"],
+      [0,"L","1.3 Printing Numbers","Numbers do not need quotes inside print(). You can even print math like print(5 + 3).","print(10 + 5)","",[],""],
+      [0,"C","1.4 Challenge: Lucky 7","Print the number 777 without any extra text.","","Type print(777) with no quotes needed.",[], "777"],
+      [0,"L","1.5 Asking with input()","input() pauses the program, asks the user a question, and saves their answer in a variable.","name = input('Name: ')\nprint('Hi', name)","",[],""],
+      [0,"C","1.6 Challenge: Echo Bot","Ask for a word using input() and print that exact word back.","","Save input() to a variable like w = input(), then print(w)",["banana"], "banana"],
+      [0,"L","1.7 Joining Text","Use + to glue strings together, or a comma inside print() to separate them with a space.","city = 'Perth'\nprint('I live in ' + city)","",[],""],
+      [0,"T","1.8 SECTION 1 TEST (No Hints)","Ask for a user's name with input(), then print: Hello <name>! (Example: if input is Sam, output must be Hello Sam!)","","",["Sam"], "Hello Sam!"],
+
+      [1,"L","2.1 Storing Variables","Variables are named boxes that store data using =. Example: score = 10","score = 10\nprint(score)","",[],""],
+      [1,"C","2.2 Challenge: Double Trouble","Create a variable x = 21, then print x * 2.","","Set x = 21 on line 1, then print(x * 2) on line 2.",[], "42"],
+      [1,"L","2.3 Math Operators","Python uses + (add), - (subtract), * (multiply), and / (divide).","print(20 - 4 * 2)","",[],""],
+      [1,"C","2.4 Challenge: Seconds in Hours","Calculate and print how many seconds are in 3 hours (3 * 60 * 60).","","Use print(3 * 60 * 60)",[], "10800"],
+      [1,"L","2.5 Whole Numbers with int()","input() always gives text. Wrap it in int(input()) to turn it into a whole number for math.","n = int(input('Number: '))\nprint(n + 1)","",[],""],
+      [1,"C","2.6 Challenge: Plus Ten","Ask the user for a number using int(input()) and print that number plus 10.","","n = int(input()) then print(n + 10)",["15"], "25"],
+      [1,"L","2.7 Updating Variables","You can change a variable using its old value: coins = coins + 5","coins = 10\ncoins = coins + 5\nprint(coins)","",[],""],
+      [1,"T","2.8 SECTION 2 TEST (No Hints)","Ask for two whole numbers with int(input()) and print their product (first number multiplied by second).","","",["6","7"], "42"],
+
+      [2,"L","3.1 Upper & Lowercase",".upper() turns text into ALL CAPS, and .lower() makes it all lowercase.","word = 'Python'\nprint(word.upper())","",[],""],
+      [2,"C","3.2 Challenge: Shout It","Ask for a word with input() and print it in ALL UPPERCASE.","","w = input() then print(w.upper())",["hello"], "HELLO"],
+      [2,"L","3.3 .capitalize() & .replace()",".capitalize() capitalizes the first letter. .replace(a, b) swaps matching text.","s = 'i like cats'\nprint(s.replace('cats', 'dogs'))","",[],""],
+      [2,"C","3.4 Challenge: Fix the Name","Ask for a lowercase name with input() and print it with .capitalize().","","name = input() then print(name.capitalize())",["percy"], "Percy"],
+      [2,"L","3.5 Counting with len()","len() counts how many characters are inside a string (including spaces).","print(len('PyBlocks'))","",[],""],
+      [2,"C","3.6 Challenge: Word Length","Ask for a word with input() and print how many letters it has using len().","","w = input() then print(len(w))",["exoplanet"], "9"],
+      [2,"L","3.7 Splitting Strings",".split() breaks a sentence into a list of individual words.","words = 'one two three'.split()\nprint(len(words))","",[],""],
+      [2,"T","3.8 SECTION 3 TEST (No Hints)","Ask for a sentence with input(), replace every space ' ' with a dash '-', and print it in ALL CAPS.","","",["go team"], "GO-TEAM"],
+
+      [3,"L","4.1 Comparisons","Use == to check if two things are equal, > for greater than, and < for less than.","print(10 > 5)\nprint(3 == 4)","",[],""],
+      [3,"C","4.2 Challenge: Big Number","Ask for a number with int(input()). If it is greater than 50, print Big","","Use if n > 50: followed by indented print('Big')",["75"], "Big"],
+      [3,"L","4.3 if and else","An else: block runs whenever the if condition is False. Always indent 4 spaces!","age = 14\nif age >= 13:\n    print('Teen')\nelse:\n    print('Kid')","",[],""],
+      [3,"C","4.4 Challenge: Secret Password","Ask for a password. If it equals 'open123', print Unlocked, otherwise print Denied.","","Use if pw == 'open123': ... else: ...",["wrong"], "Denied"],
+      [3,"L","4.5 Multiple Choices (elif)","Use elif (short for else if) to check extra conditions in order.","x = 0\nif x > 0:\n    print('Positive')\nelif x < 0:\n    print('Negative')\nelse:\n    print('Zero')","",[],""],
+      [3,"C","4.6 Challenge: Pass or Fail","Ask for a score with int(input()). Print Pass if score >= 50, else print Fail.","","if score >= 50: print('Pass') else: print('Fail')",["50"], "Pass"],
+      [3,"L","4.7 Checking Inside Strings","Use 'in' to check if a word or letter exists inside text.","if 'cat' in 'caterpillar':\n    print('Found!')","",[],""],
+      [3,"T","4.8 SECTION 4 TEST (No Hints)","Ask for a whole number with int(input()). Print Even if n % 2 == 0, otherwise print Odd.","","",["9"], "Odd"],
+
+      [4,"L","5.1 for Loops with range()","for i in range(4): repeats indented code 4 times (counting 0, 1, 2, 3).","for i in range(3):\n    print(i)","",[],""],
+      [4,"C","5.2 Challenge: Print 1 to 4","Use a for loop to print the numbers 1, 2, 3, 4 on separate lines.","","Loop range(4) and print(i + 1)",[], "1\n2\n3\n4"],
+      [4,"L","5.3 Lists & Indexing","Lists store multiple items in square brackets: items = ['a', 'b', 'c']. items[0] is 'a'.","items = ['red', 'blue']\nprint(items[0])","",[],""],
+      [4,"C","5.4 Challenge: Second Item","Create a list ['apple', 'mango', 'kiwi'] and print the second item ('mango').","","Remember Python starts counting at 0, so the second item is index 1!",[], "mango"],
+      [4,"L","5.5 Looping Through a List","You can step through every item in a list directly with for x in my_list:","for x in ['A', 'B']:\n    print(x)","",[],""],
+      [4,"C","5.6 Challenge: List Total","Loop through nums =, add them up in a total variable, and print the total (30).","","Start total = 0, then inside the loop do total = total + n",[], "30"],
+      [4,"L","5.7 while Loops","A while loop keeps running as long as its condition stays True.","n = 3\nwhile n > 0:\n    print(n)\n    n = n - 1","",[],""],
+      [4,"T","5.8 SECTION 5 TEST (No Hints)","Ask for a positive number n with int(input()), then print the sum of all numbers from 1 up to n (e.g. if n is 4, print 10).","","",["4"], "10"],
+
+      [5,"L","6.1 Creating a Turtle","Import turtle and create a pen object: t = turtle.Turtle(). Use t.forward(100) to draw a line.","import turtle\nt = turtle.Turtle()\nt.forward(100)","",[],""],
+      [5,"C","6.2 Challenge: Long Line","Import turtle, create t = turtle.Turtle(), and move forward 120 steps.","","Use t.forward(120)",[], "TURTLE:forward"],
+      [5,"L","6.3 Turning Angles","Use t.right(90) or t.left(90) to turn the turtle by degrees.","import turtle\nt = turtle.Turtle()\nt.forward(80)\nt.left(90)\nt.forward(80)","",[],""],
+      [5,"C","6.4 Challenge: Triangle","Use a for loop with range(3) to draw an equilateral triangle (turn 120 degrees each corner).","","Loop range(3): t.forward(90) and t.right(120)",[], "TURTLE:for,120"],
+      [5,"L","6.5 Colors & Pen Size","Change pen color with t.color('blue') and line thickness with t.pensize(5).","import turtle\nt = turtle.Turtle()\nt.color('purple')\nt.pensize(5)\nt.forward(100)","",[],""],
+      [5,"C","6.6 Challenge: Neon Line","Set t.color('red') and t.pensize(4), then draw a line forward 100 steps.","","Call t.color('red'), t.pensize(4), and t.forward(100)",[], "TURTLE:color,pensize"],
+      [5,"L","6.7 Circles & Speed","t.speed(0) draws instantly, and t.circle(50) draws a circle with radius 50.","import turtle\nt = turtle.Turtle()\nt.speed(0)\nt.circle(50)","",[],""],
+      [5,"T","6.8 FINAL BOSS TEST (No Hints)","Draw a hexagon (6 sides) using a for loop where each side is 60 steps long and each turn is 60 degrees.","","",[], "TURTLE:for,60"]
+    ];
+
+    const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"]];
+    let themeIdx = 0, curStg = 0, fontSize = 16;
+    let completed = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
+
+    const side = document.getElementById("side"), menu = document.getElementById("menu"), ed = document.getElementById("ed");
+    const gutter = document.getElementById("gutter"), out = document.getElementById("out"), tbox = document.getElementById("tbox");
+    const tip = document.getElementById("tip"), st = document.getElementById("st"), themeBtn = document.getElementById("themeBtn");
+    const learnPanel = document.getElementById("learnPanel"), secSel = document.getElementById("secSel"), stgSel = document.getElementById("stgSel");
+    const pngBtn = document.getElementById("pngBtn"), nextBtn = document.getElementById("nextBtn");
+
+    function changeFont(delta) {
+      fontSize = Math.min(28, Math.max(12, fontSize + delta));
+      document.getElementById("edWrap").style.fontSize = fontSize + "px";
+      localStorage.setItem("pyblocks_font", fontSize);
+    }
+
+    function updateLearnBtn() {
+      document.getElementById("learnToggle").textContent = `🎓 Learn (${completed.length}/48)`;
+    }
+
+    function toggleLearn() {
+      learnPanel.classList.toggle("open");
+      if (learnPanel.classList.contains("open")) pickStage(curStg);
+    }
+
+    function initCourseUI() {
+      sections.forEach((s, i) => {
+        const o = document.createElement("option");
+        o.value = i; o.textContent = s;
+        secSel.appendChild(o);
+      });
+      updateLearnBtn();
+    }
+
+    function resetProgress() {
+      if (!confirm("Reset all 48 Learn Mode checkmarks back to 0/48?")) return;
+      completed = [];
+      localStorage.setItem("pyblocks_done_v4", "[]");
+      updateLearnBtn();
+      pickStage(0);
+      tip.textContent = "Learn Mode progress reset to 0/48!";
+    }
+
+    function pickStage(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= course.length) idx = course.length - 1;
+      curStg = idx;
+      localStorage.setItem("pyblocks_stg", curStg);
+      const [secIdx, type, title, desc, starter, hint] = course[curStg];
+      secSel.value = secIdx;
+
+      stgSel.innerHTML = "";
+      for (let i = secIdx * 8; i < (secIdx + 1) * 8; i++) {
+        const o = document.createElement("option");
+        o.value = i;
+        o.textContent = (completed.includes(i) ? "✅ " : "") + course[i][2];
+        stgSel.appendChild(o);
+      }
+      stgSel.value = curStg;
+      nextBtn.classList.toggle("btn-pass", completed.includes(curStg));
+
+      const badge = document.getElementById("stgBadge");
+      const exBox = document.getElementById("stgEx");
+      const hintBox = document.getElementById("hintBox");
+      const hintBtn = document.getElementById("hintBtn");
+      const loadBtn = document.getElementById("loadTryBtn");
+      const markBtn = document.getElementById("markBtn");
+
+      hintBox.style.display = "none";
+      hintBox.textContent = "💡 Hint: " + hint;
+      document.getElementById("stgDesc").textContent = desc;
+
+      if (type === "L") {
+        badge.textContent = "LEARN STAGE"; badge.className = "badge b-learn";
+        exBox.style.display = "block"; exBox.textContent = starter;
+        hintBtn.style.display = "none"; loadBtn.style.display = "inline-block";
+        markBtn.textContent = "✅ Complete Lesson";
+      } else if (type === "C") {
+        badge.textContent = "CODING CHALLENGE"; badge.className = "badge b-code";
+        exBox.style.display = "none";
+        hintBtn.style.display = "inline-block"; loadBtn.style.display = "none";
+        markBtn.textContent = "▶ Run & Mark";
+      } else {
+        badge.textContent = "NO-HINT TEST"; badge.className = "badge b-test";
+        exBox.style.display = "none";
+        hintBtn.style.display = "none"; loadBtn.style.display = "none";
+        markBtn.textContent = "🏆 Submit Test";
+      }
+    }
+
+    function showHint() { document.getElementById("hintBox").style.display = "block"; }
+
+    function loadStageStarter() {
+      ed.textContent = course[curStg][4];
+      syncEditor();
+      tip.textContent = "Loaded lesson example! Tap Run to see it work.";
+    }
+
+    function markStage() {
+      const [, type, title, , , , testInputs, expected] = course[curStg];
+      if (type === "L") {
+        if (!completed.includes(curStg)) {
+          completed.push(curStg);
+          localStorage.setItem("pyblocks_done_v4", JSON.stringify(completed));
+          updateLearnBtn();
+        }
+        tip.textContent = `✅ Completed ${title}! Moving to next stage...`;
+        pickStage(curStg + 1);
+      } else {
+        go(true, [...testInputs], expected);
+      }
+    }
+
+    function applyTheme(idx) {
+      themeIdx = idx % themes.length;
+      const [key, label] = themes[themeIdx];
+      if (key === "default") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", key);
+      themeBtn.textContent = label;
+      localStorage.setItem("pyblocks_theme", themeIdx);
+    }
+
+    function cycleTheme() { applyTheme(themeIdx + 1); }
+
+    function syncEditor() {
+      const clean = ed.innerText.replace(/\u00a0/g, " ").replace(/\n$/, "");
+      const lines = clean.split("\n");
+      let count = 0;
+      const gutterLines = lines.map(line => {
+        if (/^[ \t]+\S/.test(line)) return " ";
+        count++;
+        return count;
+      });
+      gutter.textContent = gutterLines.join("\n");
+      localStorage.setItem("pyblocks_code", ed.innerHTML);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function insertBlock(code, info) {
+      tip.textContent = info;
+      const currentText = ed.innerText.replace(/\u00a0/g, " ");
+      if (currentText.trim().length > 0 && !currentText.endsWith("\n")) {
+        ed.appendChild(document.createTextNode("\n"));
+      }
+      const wrapper = document.createElement("span");
+      wrapper.innerHTML = escapeHtml(code).replace(/\[BOX\]/g, '<span class="hole"></span>') + "\n";
+      const firstHole = wrapper.querySelector(".hole");
+      while (wrapper.firstChild) ed.appendChild(wrapper.firstChild);
+      syncEditor();
+      if (firstHole) {
+        firstHole.focus();
+        const range = document.createRange();
+        range.selectNodeContents(firstHole);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+
+    function renderMenu(filter = "") {
+      menu.innerHTML = "";
+      const q = filter.toLowerCase().trim();
+      blocks.forEach(([lbl, code, info]) => {
+        if (q && !lbl.toLowerCase().includes(q) && !info.toLowerCase().includes(q)) return;
+        const d = document.createElement("div");
+        d.className = "blk";
+        const preview = code.split("\n")[0].replace(/\[BOX\]/g, "▢");
+        d.innerHTML = `<strong>${lbl}</strong><small>${escapeHtml(preview)}</small>`;
+        d.onclick = () => insertBlock(code, info);
+        menu.appendChild(d);
+      });
+    }
+
+    const examples = [
+      `import turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ['red', 'orange', 'yellow', 'green', 'cyan', 'violet']\nfor i in range(180):\n    t.color(colors[i % 6])\n    t.forward(i * 1.2)\n    t.right(90.5)`,
+      `import random\nsecret = random.randint(1, 20)\nguess = 0\nwhile guess != secret:\n    guess = int(input("Guess a number (1-20): "))\n    if guess < secret:\n        print("Too low!")\n    elif guess > secret:\n        print("Too high!")\nprint("You got it! The number was", secret)`,
+      `import time\nn = int(input("Countdown seconds: "))\nfor i in range(n):\n    print(n - i)\n    time.sleep(1)\nprint("Liftoff!")`
+    ];
+
+    function loadExample(idx) {
+      if (idx === "") return;
+      ed.textContent = examples[parseInt(idx, 10)];
+      syncEditor();
+      tip.textContent = "Loaded example! Tap Run to test it.";
+      document.getElementById("exSel").selectedIndex = 0;
+    }
+
+    function savePy() {
+      const code = ed.innerText.replace(/\u00a0/g, " ");
+      let fname = prompt("Save file as:", "main.py");
+      if (fname === null) return;
+      fname = fname.trim() || "main.py";
+      if (!fname.endsWith(".py")) fname += ".py";
+      if (navigator.clipboard) navigator.clipboard.writeText(code).catch(() => {});
+      const a = document.createElement("a");
+      a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(code);
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      tip.textContent = `Saved ${fname} (and copied to clipboard)!`;
+    }
+
+    function savePng() {
+      const canvases = tbox.querySelectorAll("canvas");
+      if (!canvases.length) return;
+      const outC = document.createElement("canvas");
+      outC.width = canvases[0].width;
+      outC.height = canvases[0].height;
+      const ctx = outC.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, outC.width, outC.height);
+      canvases.forEach(c => ctx.drawImage(c, 0, 0));
+      const a = document.createElement("a");
+      a.href = outC.toDataURL("image/png");
+      a.download = "turtle_art.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      tip.textContent = "Saved turtle_art.png!";
+    }
+
+    function loadPy(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => { ed.textContent = e.target.result; syncEditor(); tip.textContent = "Loaded " + file.name; };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function clearOut() {
+      ed.innerHTML = ""; out.textContent = ""; tbox.innerHTML = "";
+      tbox.style.display = "none"; pngBtn.style.display = "none";
+      syncEditor(); tip.textContent = "Cleared code and output!";
+    }
+
+    ed.addEventListener("input", syncEditor);
+    ed.addEventListener("keydown", e => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        document.execCommand("insertText", false, "    ");
+        syncEditor();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        const preRange = range.cloneRange();
+        preRange.selectNodeContents(ed);
+        preRange.setEnd(range.startContainer, range.startOffset);
+        const textBefore = preRange.toString().replace(/\u00a0/g, " ");
+        const currentLine = textBefore.split("\n").pop();
+        const indentMatch = currentLine.match(/^\s*/);
+        const indent = indentMatch ? indentMatch[0] : "";
+        const extra = currentLine.trim().endsWith(":") ? "    " : "";
+        document.execCommand("insertText", false, "\n" + indent + extra);
+        syncEditor();
+      }
+    });
+
+    window.onload = () => {
+      initCourseUI();
+      const savedTheme = localStorage.getItem("pyblocks_theme");
+      if (savedTheme !== null) applyTheme(parseInt(savedTheme, 10));
+      const savedFont = localStorage.getItem("pyblocks_font");
+      if (savedFont !== null) changeFont(parseInt(savedFont, 10) - 16);
+      const savedCode = localStorage.getItem("pyblocks_code");
+      if (savedCode !== null) ed.innerHTML = savedCode;
+      const savedStg = localStorage.getItem("pyblocks_stg");
+      if (savedStg !== null) curStg = parseInt(savedStg, 10);
+      renderMenu();
+      syncEditor();
+
+      if (typeof Sk !== "undefined") {
+        st.textContent = "Ready (Offline)"; st.style.color = "#a6da95";
+      } else {
+        st.textContent = "Missing Files"; st.style.color = "#ed8796";
+        out.textContent = "Make sure skulpt.min.js and skulpt-stdlib.js are in the same folder.";
+      }
+    };
+
+    function builtinRead(x) {
+      if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+        throw "File not found: '" + x + "'";
+      }
+      return Sk.builtinFiles["files"][x];
+    }
+
+    function go(isGrading = false, mockInputs = [], expected = "") {
+      if (typeof Sk === "undefined") { out.textContent = "Missing skulpt files."; return; }
+      if (ed.querySelector(".hole:empty")) { out.textContent = "Tip: Fill in all white boxes first!"; return; }
+
+      const cleanCode = ed.innerText.replace(/\u00a0/g, " ");
+      const usesTurtle = /\bturtle\b/.test(cleanCode);
+      let capturedOut = "";
+      out.textContent = "";
+      tbox.innerHTML = "";
+      tbox.style.display = usesTurtle ? "block" : "none";
+      pngBtn.style.display = usesTurtle ? "inline-block" : "none";
+
+      Sk.TurtleGraphics = { target: "tbox", width: 320, height: 240 };
+      Sk.configure({
+        output: text => { out.textContent += text; capturedOut += text; },
+        read: builtinRead,
+        inputfun: promptText => {
+          if (isGrading) {
+            if (mockInputs.length === 0) throw "Program asked for too many inputs!";
+            const val = mockInputs.shift();
+            out.textContent += (promptText || "") + val + "\n";
+            return val;
+          }
+          const ans = prompt(promptText || "Python is asking for input:");
+          if (ans === null) throw "Input cancelled";
+          out.textContent += ans + "\n";
+          return ans;
+        },
+        inputfunTakesPrompt: true,
+        __future__: Sk.python3
+      });
+
+      Sk.misceval.asyncToPromise(() =>
+        Sk.importMainWithBody("<stdin>", false, cleanCode, true)
+      ).then(() => {
+        if (isGrading) {
+          let passed = false;
+          if (expected.startsWith("TURTLE:")) {
+            const reqs = expected.slice(7).split(",");
+            passed = usesTurtle && reqs.every(r => cleanCode.includes(r));
+          } else {
+            const actual = capturedOut.trim().replace(/\r\n/g, "\n");
+            passed = (actual === expected.trim());
+          }
+          if (passed) {
+            if (!completed.includes(curStg)) {
+              completed.push(curStg);
+              localStorage.setItem("pyblocks_done_v4", JSON.stringify(completed));
+              updateLearnBtn();
+            }
+            out.textContent += `\n\n✅ PASSED! (${completed.length}/48 completed) — Tap Next ▶!`;
+            pickStage(curStg);
+          } else {
+            out.textContent += `\n\n❌ Not quite!\nExpected:\n${expected}\n\nYour code printed:\n${capturedOut.trim() || "(nothing)"}`;
+          }
+        }
+      }).catch(err => {
+        out.textContent += "\nError: " + err.toString();
+      });
+    }
+  </script>
+</body>
+</html>
