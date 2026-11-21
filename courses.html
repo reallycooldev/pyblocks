@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyBlocks Courses</title>
+  <script src="skulpt.min.js"></script>
+  <script src="skulpt-stdlib.js"></script>
+  <style>
+    :root {
+      --bg: #1e1e2e; --panel: #181825; --bar: #24273a; --tip: #202336;
+      --text: #cad3f5; --muted: #8087a2; --accent: #8aadf4; --code: #f4dbd6;
+      --out-bg: #11111b; --out-text: #a6da95; --border: #363a4f;
+    }
+    [data-theme="midnight"] { --bg: #000000; --panel: #0a0a0a; --bar: #121212; --tip: #0f0f0f; --text: #ffffff; --muted: #888888; --accent: #38bdf8; --code: #f0f9ff; --out-bg: #000000; --out-text: #4ade80; --border: #262626; }
+    [data-theme="light"] { --bg: #f8fafc; --panel: #e2e8f0; --bar: #cbd5e1; --tip: #f1f5f9; --text: #0f172a; --muted: #475569; --accent: #2563eb; --code: #1e293b; --out-bg: #ffffff; --out-text: #15803d; --border: #94a3b8; }
+    [data-theme="matrix"] { --bg: #000800; --panel: #001200; --bar: #001f00; --tip: #001700; --text: #00ff41; --muted: #008f11; --accent: #39ff14; --code: #80ff9e; --out-bg: #000300; --out-text: #00ff41; --border: #003b00; }
+    [data-theme="red"] { --bg: #1a060a; --panel: #26090f; --bar: #360d16; --tip: #2e0b12; --text: #ffe4e6; --muted: #fda4af; --accent: #fb7185; --code: #fecdd3; --out-bg: #120306; --out-text: #fda4af; --border: #881337; }
+    [data-theme="purple"] { --bg: #130924; --panel: #1c0e36; --bar: #28154d; --tip: #211140; --text: #f3e8ff; --muted: #c084fc; --accent: #d8b4fe; --code: #fae8ff; --out-bg: #0b0417; --out-text: #e879f9; --border: #4c1d95; }
+    [data-theme="ocean"] { --bg: #041b24; --panel: #072733; --bar: #0b3647; --tip: #092e3d; --text: #ccfbf1; --muted: #5eead4; --accent: #2dd4bf; --code: #e0f2fe; --out-bg: #021017; --out-text: #34d399; --border: #115e59; }
+    [data-theme="amber"] { --bg: #171004; --panel: #241806; --bar: #332209; --tip: #2b1d07; --text: #fef3c7; --muted: #fbbf24; --accent: #f59e0b; --code: #fde68a; --out-bg: #0d0802; --out-text: #fcd34d; --border: #78350f; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+    header { background: var(--panel); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    button { background: #a6da95; color: #111; border: none; padding: 6px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.82rem; }
+    .btn-dark { background: var(--bar); color: var(--text); border: 1px solid var(--border); }
+    .hub { flex: 1; padding: 24px; max-width: 820px; margin: 0 auto; width: 100%; overflow-y: auto; }
+    .hub h1 { color: var(--accent); margin-bottom: 6px; }
+    .c-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 20px; }
+    .c-card { background: var(--panel); border: 2px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+    .c-card.active { border-color: var(--accent); }
+    .c-card h3 { color: var(--accent); margin-bottom: 6px; }
+    .c-card p { color: var(--muted); font-size: 0.86rem; line-height: 1.4; margin-bottom: 14px; }
+    .work { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .lesson-bar { background: var(--tip); padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .l-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+    select { background: var(--bar); color: var(--text); border: 1px solid var(--border); padding: 5px 8px; border-radius: 5px; font-weight: bold; max-width: 240px; }
+    .cols { display: flex; flex: 1; overflow: hidden; }
+    .col { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 0; }
+    .bar { background: var(--bar); padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
+    textarea { flex: 1; background: var(--bg); color: var(--code); border: none; padding: 12px; font-family: monospace; font-size: 1rem; outline: none; resize: none; }
+    pre { flex: 1; background: var(--out-bg); color: var(--out-text); padding: 12px; font-family: monospace; overflow-y: auto; white-space: pre-wrap; font-size: 0.92rem; }
+    #tbox { background: #ffffff; display: none; border-bottom: 1px solid var(--border); text-align: center; padding: 6px; }
+    @media (max-width: 768px) { .cols { flex-direction: column; } .col { border-right: none; border-bottom: 1px solid var(--border); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-dark" onclick="location.href='index.html'">🏠 Menu</button>
+      <strong style="color:var(--accent)">PyBlocks Courses</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-dark" onclick="location.href='studio.html'">⚡ Studio</button>
+      <button class="btn-dark" id="themeBtn" onclick="cycleTheme()">Theme: Blue</button>
+    </div>
+  </header>
+
+  <div class="hub" id="hubView">
+    <h1>🎓 Course Academy</h1>
+    <p style="color:var(--muted)">Complete courses to master Python and unlock new block blueprints in Studio.</p>
+    <div class="c-grid">
+      <div class="c-card active">
+        <div>
+          <h3>Course 1: Python Fundamentals</h3>
+          <p>48 interactive stages across 6 sections: Print, Variables, Strings, Decisions, Loops & Lists, and Turtle Art.</p>
+        </div>
+        <div>
+          <div style="font-size:0.82rem;font-weight:bold;margin-bottom:8px" id="c1Stat">Progress: 0 / 48</div>
+          <button style="width:100%" onclick="openCourse1()">Start / Continue Course 1 ▶</button>
+        </div>
+      </div>
+
+      <div class="c-card">
+        <div>
+          <h3>Course 2: Turtle Art & Geometry</h3>
+          <p>Master angles, custom shapes, rainbow spirals, and mathematical patterns.</p>
+        </div>
+        <button class="btn-dark" disabled style="width:100%;opacity:0.6">🔒 Coming in PBS8</button>
+      </div>
+
+      <div class="c-card">
+        <div>
+          <h3>Course 3: Mini-Game Dev & RPGs</h3>
+          <p>Build text RPGs, dice battlers, and custom functions from scratch.</p>
+        </div>
+        <button class="btn-dark" disabled style="width:100%;opacity:0.6">🔒 Coming in PBS9</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="work" id="courseView">
+    <div class="lesson-bar">
+      <div class="l-top">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="btn-dark" onclick="showHub()">◀ Courses</button>
+          <select id="stgSel" onchange="pickStage(parseInt(this.value,10))"></select>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-dark" onclick="pickStage(Math.max(0, curStg - 1))">◀ Prev</button>
+          <button class="btn-dark" onclick="pickStage(Math.min(stages.length - 1, curStg + 1))">Next ▶</button>
+        </div>
+      </div>
+      <div id="stgDesc" style="font-size:0.9rem;line-height:1.4"></div>
+      <div id="stgHint" style="display:none;color:var(--accent);font-size:0.84rem"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-dark" onclick="loadStarter()">↺ Reset Starter</button>
+        <button class="btn-dark" id="hintBtn" onclick="toggleHint()">💡 Hint</button>
+        <button onclick="gradeStage()">✅ Check & Submit</button>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+        <div class="bar"><span>solution.py</span><button class="btn-dark" onclick="runFree()">▶ Test Run</button></div>
+        <textarea id="ed" spellcheck="false"></textarea>
+      </div>
+      <div class="col">
+        <div class="bar"><span>Output</span><button class="btn-dark" onclick="out.textContent=''">Clear</button></div>
+        <div id="tbox"></div>
+        <pre id="out">Write your code and tap Check & Submit!</pre>
+      </div>
+    </div>
+  </div>
+  <script>
+    const stages = [
+      ["1.1 Hello World", "Print exact text: Hello Python!", "Use print('Hello Python!')", "print('')", [], "Hello Python!"],
+      ["1.2 Two Lines", "Print Line 1 on the first line and Line 2 on the second line.", "Use two print() calls.", "print('Line 1')\n", [], "Line 1\nLine 2"],
+      ["1.3 Math Print", "Print the result of 12 + 8.", "No quotes around math: print(12 + 8)", "print()", [], "20"],
+      ["1.4 Ask Name", "Ask for a name and print Hi followed by that name.", "Combine 'Hi ' + name", "name = input('Name: ')\nprint()", ["Alex"], "Hi Alex"],
+      ["1.5 Echo Twice", "Ask for a word and print it twice on separate lines.", "Print the variable two times.", "w = input()\n", ["Echo"], "Echo\nEcho"],
+      ["1.6 Greeter", "Ask for a city and print Welcome to <city>!", "Use 'Welcome to ' + city + '!'", "city = input()\n", ["Perth"], "Welcome to Perth!"],
+      ["1.7 Number Doubler", "Ask for a number and print it doubled.", "Convert with int(input()) first.", "n = int(input())\nprint()", ["7"], "14"],
+      ["1.8 BOSS TEST: Intro Card", "No-Hint Boss! Ask for name and age, then print: <name> is <age>", "No hints on Boss Tests!", "name = input()\nage = input()\n", ["Sam", "12"], "Sam is 12"],
+
+      ["2.1 Score Variable", "Create score = 50 and print it.", "Assign score = 50 then print(score)", "score = \nprint(score)", [], "50"],
+      ["2.2 Level Up", "Start hp = 100, subtract 25, and print hp.", "Use hp = hp - 25", "hp = 100\n\nprint(hp)", [], "75"],
+      ["2.3 Multiply", "Print 6 multiplied by 7.", "Use * for multiplication.", "print()", [], "42"],
+      ["2.4 Remainder", "Print the remainder of 17 divided by 5.", "Use the % modulo operator.", "print(17 % 5)", [], "2"],
+      ["2.5 f-String Intro", "Set hero = 'Percy' and print: Hero: Percy", "Use f'Hero: {hero}'", "hero = 'Percy'\nprint()", [], "Hero: Percy"],
+      ["2.6 Total Cost", "Ask for price and quantity, then print total cost.", "Multiply int(input()) * int(input())", "p = int(input())\nq = int(input())\n", ["5", "4"], "20"],
+      ["2.7 Swap Values", "Swap a = 1 and b = 2 so print(a, b) outputs 2 1.", "Use a, b = b, a", "a = 1\nb = 2\n\nprint(a, b)", [], "2 1"],
+      ["2.8 BOSS TEST: XP Calc", "No-Hint Boss! Ask for wins and print wins * 150.", "No hints on Boss Tests!", "w = int(input())\n", ["3"], "450"],
+
+      ["3.1 Shout", "Convert 'python' to uppercase and print it.", "Use .upper()", "w = 'python'\nprint()", [], "PYTHON"],
+      ["3.2 Whisper", "Convert 'HELLO' to lowercase and print it.", "Use .lower()", "w = 'HELLO'\nprint()", [], "hello"],
+      ["3.3 Capitalize", "Capitalize 'percy' so it prints Percy.", "Use .capitalize()", "n = 'percy'\nprint()", [], "Percy"],
+      ["3.4 Clean Spaces", "Remove extra spaces from '  hi  ' and print it.", "Use .strip()", "s = '  hi  '\nprint()", [], "hi"],
+      ["3.5 Word Swap", "Replace 'cats' with 'dogs' in 'I love cats' and print it.", "Use .replace('cats', 'dogs')", "t = 'I love cats'\nprint()", [], "I love dogs"],
+      ["3.6 String Length", "Print the length of 'PyBlocks'.", "Use len('PyBlocks')", "print()", [], "8"],
+      ["3.7 First Letter", "Print the first character of 'Python'.", "Index 0 gives the first letter: w[0]", "w = 'Python'\nprint()", [], "P"],
+      ["3.8 BOSS TEST: Tag Maker", "No-Hint Boss! Ask for a word, strip spaces, uppercase it, and print!", "No hints on Boss Tests!", "w = input()\n", ["  boss  "], "BOSS"],
+
+      ["4.1 Big Check", "If x > 5 print Big.", "Remember the colon : and 4 spaces.", "x = 10\nif x > 5:\n    ", [], "Big"],
+      ["4.2 Pass or Fail", "Ask for score. If >= 50 print Pass, else print Fail.", "Use if score >= 50: and else:", "s = int(input())\n", ["65"], "Pass"],
+      ["4.3 Secret Password", "Ask for password. If it equals 'hydra' print Open, else Locked.", "Use == to compare strings.", "p = input()\n", ["hydra"], "Open"],
+      ["4.4 Even or Odd", "Ask for number. Print Even if n % 2 == 0 else Odd.", "Check n % 2 == 0", "n = int(input())\n", ["8"], "Even"],
+      ["4.5 Elif Grades", "If x >= 90 print A, elif x >= 70 print B, else print C.", "Use elif x >= 70:", "x = int(input())\n", ["75"], "B"],
+      ["4.6 Both True", "If a > 0 and b > 0 print Both Positive.", "Use the and keyword.", "a = 3\nb = 4\n", [], "Both Positive"],
+      ["4.7 Either True", "If day == 'Sat' or day == 'Sun' print Weekend.", "Use the or keyword.", "day = 'Sun'\n", [], "Weekend"],
+      ["4.8 BOSS TEST: Boss Door", "No-Hint Boss! Ask for level. If >= 10 print Enter, else Train More.", "No hints on Boss Tests!", "lvl = int(input())\n", ["10"], "Enter"],
+
+      ["5.1 Count 0 to 3", "Use range(4) to print 0, 1, 2, 3 on separate lines.", "for i in range(4):", "for i in range(4):\n    ", [], "0\n1\n2\n3"],
+      ["5.2 Repeat Word", "Print Go! 3 times using a loop.", "for i in range(3): print('Go!')", "", [], "Go!\nGo!\nGo!"],
+      ["5.3 While Countdown", "Use a while loop to print 3, 2, 1.", "Decrease n by 1 each loop.", "n = 3\nwhile n > 0:\n    print(n)\n    ", [], "3\n2\n1"],
+      ["5.4 Loop List", "Print each item in ['a', 'b', 'c'].", "for x in items: print(x)", "items = ['a', 'b', 'c']\n", [], "a\nb\nc"],
+      ["5.5 Append Item", "Append 'Gold' to bag and print bag.", "Use bag.append('Gold')", "bag = ['Map']\n\nprint(bag)", [], "['Map', 'Gold']"],
+      ["5.6 Sum Numbers", "Add up [10, 20, 30] and print the total (60).", "Use sum(nums) or a loop.", "nums = [10, 20, 30]\nprint()", [], "60"],
+      ["5.7 Dictionary Lookup", "Print the 'hp' value from hero = {'name': 'Percy', 'hp': 100}.", "Use hero['hp']", "hero = {'name': 'Percy', 'hp': 100}\nprint()", [], "100"],
+      ["5.8 BOSS TEST: Evens", "No-Hint Boss! Print 2, 4, 6 using a loop.", "No hints on Boss Tests!", "", [], "2\n4\n6"],
+
+      ["6.1 Move Forward", "Import turtle, create t = turtle.Turtle(), and move forward(100).", "Use t.forward(100)", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,forward"],
+      ["6.2 Turn Corner", "Move forward(80), turn right(90), and move forward(80).", "Use t.right(90)", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,forward,right"],
+      ["6.3 Color Line", "Set t.color('blue') and draw forward(90).", "Use t.color('blue')", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,color,forward"],
+      ["6.4 Draw Circle", "Draw a circle of radius 40 using t.circle(40).", "Use t.circle(40)", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,circle"],
+      ["6.5 Loop Square", "Use for i in range(4): to draw a square (forward + right 90).", "Repeat forward(60) and right(90) 4 times.", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward,right"],
+      ["6.6 Triangle", "Draw a triangle using 3 turns of 120 degrees.", "for i in range(3): t.forward(70); t.left(120)", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward"],
+      ["6.7 Thick Pen", "Set t.pensize(5) and draw a red line forward(100).", "Combine pensize(5), color('red'), forward(100)", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,pensize,forward"],
+      ["6.8 BOSS TEST: Starburst", "No-Hint Boss! Use a loop and turtle to draw a multi-point star!", "No hints on Boss Tests!", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward"]
+    ];
+    const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"],["purple","Theme: Purple"],["ocean","Theme: Ocean"],["amber","Theme: Amber"]];
+    let themeIdx = parseInt(localStorage.getItem("pyblocks_theme") || "0", 10);
+    let completed = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
+    let curStg = parseInt(localStorage.getItem("pyblocks_stg") || "0", 10);
+    const ed = document.getElementById("ed"), out = document.getElementById("out"), tbox = document.getElementById("tbox");
+
+    function applyTheme(idx) {
+      document.documentElement.style.cssText = "";
+      localStorage.removeItem("pyblocks_custom_colors");
+      themeIdx = idx % themes.length;
+      const [key, label] = themes[themeIdx];
+      if (key === "default") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", key);
+      document.getElementById("themeBtn").textContent = label;
+      localStorage.setItem("pyblocks_theme", themeIdx);
+    }
+    function cycleTheme() { applyTheme(themeIdx + 1); }
+
+    function updateHubStats() {
+      document.getElementById("c1Stat").textContent = "Progress: " + completed.length + " / " + stages.length + (completed.length >= 48 ? " 🏆 UNLOCKED!" : "");
+    }
+
+    function showHub() {
+      updateHubStats();
+      document.getElementById("hubView").style.display = "block";
+      document.getElementById("courseView").style.display = "none";
+    }
+
+    function openCourse1() {
+      document.getElementById("hubView").style.display = "none";
+      document.getElementById("courseView").style.display = "flex";
+      pickStage(curStg);
+    }
+
+    function buildSelect() {
+      const sel = document.getElementById("stgSel");
+      sel.innerHTML = "";
+      stages.forEach((s, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = (completed.includes(i) ? "✅ " : "") + s[0];
+        sel.appendChild(opt);
+      });
+      sel.value = curStg;
+    }
+
+    function pickStage(idx) {
+      curStg = idx;
+      localStorage.setItem("pyblocks_stg", curStg);
+      buildSelect();
+      const s = stages[curStg];
+      document.getElementById("stgDesc").textContent = s[1];
+      const h = document.getElementById("stgHint");
+      h.style.display = "none";
+      h.textContent = "💡 " + s[2];
+      document.getElementById("hintBtn").style.display = s[0].includes("BOSS") ? "none" : "inline-block";
+      ed.value = s[3];
+      out.textContent = "Ready to test " + s[0] + "!";
+      tbox.style.display = "none";
+    }
+
+    function loadStarter() { ed.value = stages[curStg][3]; }
+    function toggleHint() {
+      const h = document.getElementById("stgHint");
+      h.style.display = h.style.display === "none" ? "block" : "none";
+    }
+
+    function explainError(msg) {
+      if (/SyntaxError/i.test(msg)) return "💡 Tip: Check for a missing colon (:) or unclosed quote/bracket.";
+      if (/IndentationError/i.test(msg)) return "💡 Tip: Indent lines after ':' by 4 spaces.";
+      if (/NameError/i.test(msg)) return "💡 Tip: Check spelling or put quotes around text.";
+      if (/TypeError/i.test(msg)) return "💡 Tip: Use int() for numbers or str() to join text + numbers.";
+      return "💡 Tip: Check the line number in the error above for typos.";
+    }
+
+    function builtinRead(x) {
+      if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) throw "File not found: '" + x + "'";
+      return Sk.builtinFiles["files"][x];
+    }
+
+    function execPython(isGrading) {
+      const s = stages[curStg];
+      const mockInputs = [...s[4]];
+      const expected = s[5];
+      const code = ed.value;
+      const usesTurtle = /\bturtle\b/.test(code);
+      let captured = "";
+      out.textContent = "";
+      tbox.innerHTML = "";
+      tbox.style.display = usesTurtle ? "block" : "none";
+
+      Sk.TurtleGraphics = { target: "tbox", width: 320, height: 220 };
+      Sk.configure({
+        output: t => { out.textContent += t; captured += t; },
+        read: builtinRead,
+        inputfun: p => {
+          if (isGrading) {
+            if (!mockInputs.length) throw "Program asked for too many inputs!";
+            const v = mockInputs.shift();
+            out.textContent += (p || "") + v + "\n";
+            return v;
+          }
+          const ans = prompt(p || "Input:");
+          if (ans === null) throw "Cancelled";
+          out.textContent += ans + "\n";
+          return ans;
+        },
+        inputfunTakesPrompt: true,
+        __future__: Sk.python3
+      });
+
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true))
+        .then(() => {
+          if (!isGrading) return;
+          let passed = false;
+          if (expected.startsWith("TURTLE:")) {
+            const reqs = expected.slice(7).split(",");
+            passed = usesTurtle && reqs.every(r => code.includes(r));
+          } else {
+            passed = captured.trim().replace(/\r\n/g, "\n") === expected.trim();
+          }
+          if (passed) {
+            if (!completed.includes(curStg)) {
+              completed.push(curStg);
+              localStorage.setItem("pyblocks_done_v4", JSON.stringify(completed));
+            }
+            buildSelect();
+            updateHubStats();
+            out.textContent += "\n\n✅ PASSED! (" + completed.length + "/48)";
+            if (completed.length >= 48) {
+              out.textContent += "\n🎉 COURSE 1 COMPLETE! New Blueprints unlocked in Studio!";
+            }
+          } else {
+            out.textContent += "\n\n❌ Not quite!\nExpected:\n" + expected + "\n\nGot:\n" + (captured.trim() || "(nothing)");
+          }
+        })
+        .catch(err => {
+          const msg = err.toString();
+          out.textContent += "\nError: " + msg + "\n\n" + explainError(msg);
+        });
+    }
+
+    function runFree() { execPython(false); }
+    function gradeStage() { execPython(true); }
+
+    ed.addEventListener("keydown", e => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = ed.selectionStart, end = ed.selectionEnd;
+        ed.value = ed.value.substring(0, start) + "    " + ed.value.substring(end);
+        ed.selectionStart = ed.selectionEnd = start + 4;
+      }
+    });
+
+    window.onload = () => {
+      applyTheme(themeIdx);
+      const custom = JSON.parse(localStorage.getItem("pyblocks_custom_colors") || "{}");
+      Object.keys(custom).forEach(k => document.documentElement.style.setProperty(k, custom[k]));
+      if (Object.keys(custom).length) document.getElementById("themeBtn").textContent = "Theme: Custom";
+      updateHubStats();
+    };
+  </script>
+</body>
+</html>

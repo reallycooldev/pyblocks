@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyBlocks Studio V7</title>
+  <script src="skulpt.min.js"></script>
+  <script src="skulpt-stdlib.js"></script>
+  <style>
+    :root {
+      --bg: #1e1e2e; --panel: #181825; --bar: #24273a; --tip: #202336;
+      --text: #cad3f5; --muted: #8087a2; --accent: #8aadf4; --code: #f4dbd6;
+      --out-bg: #11111b; --out-text: #a6da95; --border: #363a4f;
+    }
+    [data-theme="midnight"] { --bg: #000000; --panel: #0a0a0a; --bar: #121212; --tip: #0f0f0f; --text: #ffffff; --muted: #888888; --accent: #38bdf8; --code: #f0f9ff; --out-bg: #000000; --out-text: #4ade80; --border: #262626; }
+    [data-theme="light"] { --bg: #f8fafc; --panel: #e2e8f0; --bar: #cbd5e1; --tip: #f1f5f9; --text: #0f172a; --muted: #475569; --accent: #2563eb; --code: #1e293b; --out-bg: #ffffff; --out-text: #15803d; --border: #94a3b8; }
+    [data-theme="matrix"] { --bg: #000800; --panel: #001200; --bar: #001f00; --tip: #001700; --text: #00ff41; --muted: #008f11; --accent: #39ff14; --code: #80ff9e; --out-bg: #000300; --out-text: #00ff41; --border: #003b00; }
+    [data-theme="red"] { --bg: #1a060a; --panel: #26090f; --bar: #360d16; --tip: #2e0b12; --text: #ffe4e6; --muted: #fda4af; --accent: #fb7185; --code: #fecdd3; --out-bg: #120306; --out-text: #fda4af; --border: #881337; }
+    [data-theme="purple"] { --bg: #130924; --panel: #1c0e36; --bar: #28154d; --tip: #211140; --text: #f3e8ff; --muted: #c084fc; --accent: #d8b4fe; --code: #fae8ff; --out-bg: #0b0417; --out-text: #e879f9; --border: #4c1d95; }
+    [data-theme="ocean"] { --bg: #041b24; --panel: #072733; --bar: #0b3647; --tip: #092e3d; --text: #ccfbf1; --muted: #5eead4; --accent: #2dd4bf; --code: #e0f2fe; --out-bg: #021017; --out-text: #34d399; --border: #115e59; }
+    [data-theme="amber"] { --bg: #171004; --panel: #241806; --bar: #332209; --tip: #2b1d07; --text: #fef3c7; --muted: #fbbf24; --accent: #f59e0b; --code: #fde68a; --out-bg: #0d0802; --out-text: #fcd34d; --border: #78350f; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+    header { background: var(--panel); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
+    .h-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    .side { width: 250px; background: var(--panel); padding: 10px; overflow-y: auto; border-right: 1px solid var(--border); flex-shrink: 0; }
+    .side.hide { display: none; }
+    .search { width: 100%; background: var(--bar); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; border-radius: 5px; margin-bottom: 8px; outline: none; }
+    .sec-hdr { font-size: 0.72rem; font-weight: bold; text-transform: uppercase; color: var(--accent); margin: 12px 0 6px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
+    .blk { background: var(--bar); border-left: 4px solid var(--accent); padding: 8px; margin-bottom: 7px; border-radius: 4px; cursor: pointer; font-size: 0.84rem; }
+    .blk:hover { filter: brightness(1.15); }
+    .blk small { display: block; color: var(--muted); font-family: monospace; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .c-badge { background: var(--bg); color: var(--accent); border: 1px solid var(--border); font-size: 0.65rem; padding: 1px 6px; border-radius: 999px; float: right; }
+    .lock-card { background: var(--bar); border: 1px dashed var(--border); border-radius: 6px; padding: 10px; font-size: 0.78rem; color: var(--muted); text-align: center; margin-bottom: 8px; }
+    .work { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .tip { background: var(--tip); padding: 7px 14px; font-size: 0.86rem; border-bottom: 1px solid var(--border); }
+    .cols { display: flex; flex: 1; overflow: hidden; }
+    .col { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 0; }
+    .bar { background: var(--bar); padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; gap: 6px; flex-wrap: wrap; }
+    button, select { background: #a6da95; color: #111; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+    .btn-dark, select { background: var(--bar); color: var(--text); border: 1px solid var(--border); }
+    .btn-learn { background: var(--accent); color: #111; }
+    .btn-stop { background: #ed8796 !important; color: #111 !important; }
+    .ed-wrap { flex: 1; display: flex; overflow: hidden; background: var(--bg); }
+    .gutter { width: 38px; background: var(--panel); color: var(--muted); padding: 12px 6px; font-family: monospace; font-size: 16px; text-align: right; user-select: none; border-right: 1px solid var(--border); line-height: 1.45; overflow: hidden; }
+    #ed { flex: 1; background: var(--bg); color: var(--code); padding: 12px; font-family: monospace; font-size: 16px; outline: none; overflow: auto; white-space: pre; line-height: 1.45; }
+    .hole { display: inline-block; min-width: 24px; background: #ffffff; color: #111111; border-radius: 3px; padding: 0 4px; font-weight: bold; outline: 2px solid var(--accent); }
+    pre { flex: 1; background: var(--out-bg); color: var(--out-text); padding: 12px; font-family: monospace; overflow-y: auto; white-space: pre-wrap; font-size: 0.92rem; }
+    #tbox { background: #ffffff; display: none; border-bottom: 1px solid var(--border); text-align: center; padding: 6px; }
+    .xray-box { display: none; background: var(--panel); border-top: 1px solid var(--border); padding: 8px 12px; font-family: monospace; font-size: 0.82rem; max-height: 120px; overflow-y: auto; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .xray-box.open { display: flex; }
+    .x-chip { background: var(--bar); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; color: var(--code); }
+    .x-chip b { color: var(--accent); }
+    .custom-bar { display: none; background: var(--panel); padding: 8px 12px; border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap; align-items: center; font-size: 0.78rem; }
+    .custom-bar.open { display: flex; }
+    .cpick { display: flex; align-items: center; gap: 4px; }
+    .cpick input[type="color"] { width: 26px; height: 24px; border: 1px solid var(--border); background: none; cursor: pointer; padding: 0; border-radius: 3px; }
+    @media (max-width: 768px) {
+      .side { position: absolute; z-index: 20; height: calc(100vh - 46px); }
+      .cols { flex-direction: column; }
+      .col { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="btn-dark" onclick="toggleSide()">☰ Blocks</button>
+      <button class="btn-dark" onclick="location.href='index.html'">🏠 Menu</button>
+      <strong style="color:var(--accent)">PyBlocks Studio</strong>
+    </div>
+    <div class="h-tools">
+      <button class="btn-learn" onclick="location.href='courses.html'">🎓 Courses</button>
+      <button class="btn-dark" onclick="changeFont(-1)">A-</button>
+      <button class="btn-dark" onclick="changeFont(1)">A+</button>
+      <button class="btn-dark" id="themeBtn" onclick="cycleTheme()">Theme: Blue</button>
+      <button class="btn-dark" onclick="toggleCustomTheme()" title="Custom Colors">🎨</button>
+      <span id="st" style="font-size:0.78rem">Checking...</span>
+    </div>
+  </header>
+
+  <div class="custom-bar" id="customBar">
+    <label class="cpick">Editor BG <input type="color" id="c_bg" value="#1e1e2e" oninput="setCustomColor('--bg', this.value)"></label>
+    <label class="cpick">Panels <input type="color" id="c_panel" value="#181825" oninput="setCustomColor('--panel', this.value); setCustomColor('--bar', this.value); setCustomColor('--tip', this.value)"></label>
+    <label class="cpick">Accent <input type="color" id="c_acc" value="#8aadf4" oninput="setCustomColor('--accent', this.value)"></label>
+    <label class="cpick">Code <input type="color" id="c_code" value="#f4dbd6" oninput="setCustomColor('--code', this.value); setCustomColor('--text', this.value)"></label>
+    <label class="cpick">Out BG <input type="color" id="c_outbg" value="#11111b" oninput="setCustomColor('--out-bg', this.value)"></label>
+    <label class="cpick">Out Text <input type="color" id="c_out" value="#a6da95" oninput="setCustomColor('--out-text', this.value)"></label>
+    <button class="btn-dark" onclick="resetCustomTheme()">Reset</button>
+  </div>
+
+  <div class="main">
+    <div class="side" id="sidePanel">
+      <input class="search" id="search" placeholder="Search blueprints..." oninput="renderMenu()">
+      <div id="menu"></div>
+    </div>
+
+    <div class="work">
+      <div class="tip" id="tip">Click a blueprint on the left to insert code! (Press Tab to jump boxes)</div>
+      <div class="cols">
+        <div class="col">
+          <div class="bar">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span>main.py</span>
+              <select onchange="loadEx(this.value); this.value=''">
+                <option value="">Examples...</option>
+                <option value="0">1. Rainbow Vortex</option>
+                <option value="1">2. Number Guessing</option>
+                <option value="2">3. Countdown Timer</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:5px">
+              <input type="file" id="fileIn" accept=".py,.txt" style="display:none" onchange="openFile(event)">
+              <button class="btn-dark" onclick="document.getElementById('fileIn').click()">Open</button>
+              <button class="btn-dark" onclick="saveCode()">Save</button>
+              <button id="run" onclick="go()">Run</button>
+            </div>
+          </div>
+          <div class="ed-wrap">
+            <div class="gutter" id="gutter">1</div>
+            <div id="ed" contenteditable="true" spellcheck="false">import random
+name = input("What is your name? ")
+lucky = random.randint(1, 100)
+print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="bar">
+            <span>Output</span>
+            <div style="display:flex;gap:5px">
+              <button class="btn-dark" id="pngBtn" style="display:none" onclick="savePng()">Save PNG</button>
+              <button class="btn-dark" id="xrayBtn" onclick="toggleXray()">🔍 X-Ray</button>
+              <button class="btn-dark" onclick="clearAll()">Clear</button>
+            </div>
+          </div>
+          <div id="tbox"></div>
+          <pre id="out">Ready!</pre>
+          <div class="xray-box" id="xrayBox"><span style="color:var(--muted)">Run code to inspect variables...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const blocks = [
+      ["Print", "print('___')", "Shows text in the Output box.", "starter"],
+      ["Variables", "___ = '___'\n___ = ___\nprint(___, ___)", "Stores text and numbers in two variables.", "starter"],
+      ["Input", "___ = input('___: ')\nprint(___)", "Asks a question and prints the answer.", "starter"],
+      ["if / else", "if ___ > ___:\n    print('___')\nelse:\n    print('___')", "Checks a condition and runs one of two paths.", "starter"],
+      ["for Loop", "for ___ in range(___):\n    print(___)", "Repeats code a set number of times.", "starter"],
+      ["List", "___ = ['___', '___', '___']\nprint(___)", "Stores 3 items in a list.", "starter"],
+
+      ["f-String", "___ = '___'\n___ = ___\nprint(f'{___} has {___}')", "Embeds multiple variables inside text.", "c1"],
+      ["Dictionary {}", "___ = {'___': '___', '___': ___}\nprint(___['___'])", "Stores key-value pairs inside {}.", "c1"],
+      ["while Loop", "___ = ___\nwhile ___ > ___:\n    print(___)\n    ___ -= 1", "Repeats while a condition stays True.", "c1"],
+      ["List .append()", "___ = ['___']\n___.append('___')\nprint(___)", "Adds a new item to the end of a list.", "c1"],
+      [".split()", "___ = '___ ___ ___'.split('___')\nprint(___)", "Splits text into a list using a separator.", "c1"],
+      [".replace()", "___ = '___'\nprint(___.replace('___', '___'))", "Swaps one word for another inside text.", "c1"],
+      ["def Function", "def ___(___):\n    return '___' + ___\nprint(___('___'))", "Creates a reusable custom function.", "c1"],
+      ["Random", "import random\n___ = random.randint(___, ___)\nprint(___)", "Picks a random number between min and max.", "c1"],
+      ["Turtle Setup", "import turtle\nt = turtle.Turtle()\nt.color('___')\nt.forward(___)", "Sets pen color and draws forward.", "c1"]
+    ];
+
+    const examples = [
+      "import turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ['red', 'orange', 'yellow', 'green', 'cyan', 'magenta']\nfor i in range(60):\n    t.color(colors[i % 6])\n    t.forward(i * 3)\n    t.right(61)",
+      "import random\nsecret = random.randint(1, 20)\nguess = 0\nwhile guess != secret:\n    guess = int(input('Guess (1-20): '))\n    if guess < secret:\n        print('Too low!')\n    elif guess > secret:\n        print('Too high!')\nprint(f'You got it! The number was {secret}')",
+      "import time\nfor i in range(5, 0, -1):\n    print(i)\n    time.sleep(0.5)\nprint('BLAST OFF!')"
+    ];
+
+    const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"],["purple","Theme: Purple"],["ocean","Theme: Ocean"],["amber","Theme: Amber"]];
+    let themeIdx = parseInt(localStorage.getItem("pyblocks_theme") || "0", 10);
+    let customColors = JSON.parse(localStorage.getItem("pyblocks_custom_colors") || "{}");
+    let fontSize = 16;
+
+    const menu = document.getElementById("menu"), ed = document.getElementById("ed"), gutter = document.getElementById("gutter");
+    const out = document.getElementById("out"), tip = document.getElementById("tip"), st = document.getElementById("st");
+    const tbox = document.getElementById("tbox"), pngBtn = document.getElementById("pngBtn"), themeBtn = document.getElementById("themeBtn");
+
+    function syncPickers() {
+      const s = getComputedStyle(document.documentElement);
+      [["c_bg","--bg"],["c_panel","--panel"],["c_acc","--accent"],["c_code","--code"],["c_outbg","--out-bg"],["c_out","--out-text"]].forEach(([id, v]) => {
+        const el = document.getElementById(id);
+        let hex = s.getPropertyValue(v).trim();
+        if (hex.startsWith("#") && hex.length === 4) hex = "#" + hex + hex + hex + hex + hex + hex;
+        if (el && hex.startsWith("#")) el.value = hex;
+      });
+    }
+
+    function toggleCustomTheme() { syncPickers(); document.getElementById("customBar").classList.toggle("open"); }
+    function setCustomColor(v, val) { document.documentElement.style.setProperty(v, val); customColors[v] = val; localStorage.setItem("pyblocks_custom_colors", JSON.stringify(customColors)); themeBtn.textContent = "Theme: Custom"; }
+    function resetCustomTheme() { customColors = {}; localStorage.removeItem("pyblocks_custom_colors"); document.documentElement.style.cssText = ""; applyTheme(themeIdx); syncPickers(); }
+    function applyTheme(idx) {
+      document.documentElement.style.cssText = ""; localStorage.removeItem("pyblocks_custom_colors"); customColors = {};
+      themeIdx = idx % themes.length;
+      const [key, label] = themes[themeIdx];
+      if (key === "default") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", key);
+      themeBtn.textContent = label; localStorage.setItem("pyblocks_theme", themeIdx); syncPickers();
+    }
+    function cycleTheme() { applyTheme(themeIdx + 1); }
+    function renderMenu() {
+      const q = (document.getElementById("search")?.value || "").toLowerCase();
+      const done = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
+      const c1Unlocked = done.length >= 48;
+      menu.innerHTML = "";
+
+      const addHeader = (title, tag) => {
+        const h = document.createElement("div");
+        h.className = "sec-hdr";
+        h.innerHTML = "<span>" + title + "</span><span>" + tag + "</span>";
+        menu.appendChild(h);
+      };
+
+      const addBlock = ([lbl, code, info, tier]) => {
+        if (q && !lbl.toLowerCase().includes(q) && !code.toLowerCase().includes(q)) return;
+        const d = document.createElement("div");
+        d.className = "blk";
+        const badge = tier === "c1" ? '<span class="c-badge">Course 1</span>' : "";
+        const preview = code.split("\n").at(0).replace(/</g, "&lt;");
+        d.innerHTML = badge + "<strong>" + lbl + "</strong><small>" + preview + "</small>";
+        d.onclick = () => insertBlock(code, info);
+        menu.appendChild(d);
+      };
+
+      addHeader("⚡ Starter Blueprints", "Unlocked");
+      blocks.filter(b => b[3] === "starter").forEach(addBlock);
+
+      addHeader("🎓 Course 1 Blueprints", c1Unlocked ? "Unlocked" : done.length + "/48");
+      if (c1Unlocked || q) {
+        blocks.filter(b => b[3] === "c1").forEach(addBlock);
+      } else {
+        const lock = document.createElement("div");
+        lock.className = "lock-card";
+        lock.innerHTML = "🔒 Beat <b>Course 1</b> (" + done.length + "/48) to unlock f-Strings, {}, Functions & more!<br><small>(Search to preview or type anytime)</small>";
+        menu.appendChild(lock);
+      }
+
+      addHeader("🐢 Course 2 Blueprints", "PBS8");
+      const c2 = document.createElement("div");
+      c2.className = "lock-card";
+      c2.textContent = "🔒 Turtle Art & Geometry — Coming in PBS8!";
+      menu.appendChild(c2);
+    }
+
+    function insertBlock(code, info) {
+      tip.textContent = info;
+      const html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/___/g, '<span class="hole" contenteditable="true"></span>').replace(/\n/g, "<br>");
+      const prefix = (ed.innerText.trim() && !ed.innerText.endsWith("\n")) ? "<br>" : "";
+      ed.innerHTML += prefix + html + "<br>";
+      syncEditor();
+      const firstHole = ed.querySelector(".hole:empty");
+      if (firstHole) firstHole.focus();
+    }
+
+    function toggleSide() { document.getElementById("sidePanel").classList.toggle("hide"); }
+    function changeFont(d) { fontSize = Math.min(28, Math.max(11, fontSize + d)); ed.style.fontSize = gutter.style.fontSize = fontSize + "px"; localStorage.setItem("pyblocks_font", fontSize); }
+    function syncEditor() {
+      const lines = ed.innerText.replace(/\u00a0/g, " ").split("\n").length;
+      let nums = "";
+      for (let i = 1; i <= Math.max(1, lines); i++) nums += i + "\n";
+      gutter.textContent = nums.trimEnd();
+      localStorage.setItem("pyblocks_code", ed.innerHTML);
+    }
+    ed.addEventListener("scroll", () => { gutter.scrollTop = ed.scrollTop; });
+    ed.addEventListener("input", syncEditor);
+
+    function loadEx(i) { if (examples[i]) { ed.textContent = examples[i]; tip.textContent = "Loaded Example!"; syncEditor(); } }
+    function openFile(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { ed.textContent = ev.target.result; syncEditor(); }; r.readAsText(f); }
+    function saveCode() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ed.innerText.replace(/\u00a0/g, " ")], { type: "text/plain" })); a.download = "main.py"; a.click(); }
+    function savePng() { const c = tbox.querySelector("canvas"); if (!c) return; const a = document.createElement("a"); a.download = "pyblocks_art.png"; a.href = c.toDataURL("image/png"); a.click(); }
+    function clearAll() { ed.innerHTML = ""; out.textContent = ""; tbox.innerHTML = ""; tbox.style.display = "none"; pngBtn.style.display = "none"; localStorage.removeItem("pyblocks_code"); syncEditor(); }
+
+    const pairs = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
+    const closers = new Set([")", "]", "}", '"', "'"]);
+    ed.addEventListener("beforeinput", e => {
+      if (e.inputType !== "insertText" || (!pairs[e.data] && !closers.has(e.data))) return;
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const afterRange = range.cloneRange();
+      afterRange.selectNodeContents(ed);
+      afterRange.setStart(range.endContainer, range.endOffset);
+      const lineAfter = afterRange.toString().split("\n").at(0);
+      if (closers.has(e.data) && lineAfter.startsWith(e.data)) { e.preventDefault(); sel.modify("move", "forward", "character"); return; }
+      if (!pairs[e.data]) return;
+      e.preventDefault();
+      const openNode = document.createTextNode(e.data + range.toString());
+      const closeNode = document.createTextNode(pairs[e.data]);
+      range.deleteContents(); range.insertNode(closeNode); range.insertNode(openNode);
+      range.setStartAfter(openNode); range.collapse(true);
+      sel.removeAllRanges(); sel.addRange(range); syncEditor();
+    });
+
+    ed.addEventListener("keydown", e => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const holes = Array.from(ed.querySelectorAll(".hole"));
+        const cur = document.activeElement?.closest?.(".hole") || window.getSelection()?.anchorNode?.parentElement?.closest?.(".hole");
+        const next = cur ? holes[holes.indexOf(cur) + 1] : holes.find(h => !h.textContent.trim());
+        if (next) { next.focus(); return; }
+        document.execCommand("insertText", false, "    "); syncEditor();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        const pre = range.cloneRange(); pre.selectNodeContents(ed); pre.setEnd(range.startContainer, range.startOffset);
+        const curLine = pre.toString().replace(/\u00a0/g, " ").split("\n").pop();
+        const indent = (curLine.match(/^\s*/) || [""]).at(0);
+        const extra = curLine.trim().endsWith(":") ? "    " : "";
+        document.execCommand("insertText", false, "\n" + indent + extra); syncEditor();
+      }
+    });
+    function builtinRead(x) {
+      if (!Sk.builtinFiles || !Sk.builtinFiles["files"][x]) throw "File not found: '" + x + "'";
+      return Sk.builtinFiles["files"][x];
+    }
+
+    function explainError(msg) {
+      if (/SyntaxError/i.test(msg)) return "💡 Tip: Check for a missing colon (:) at the end of an if/for/while line, an unclosed bracket or quote, or using '=' instead of '==' inside an if check.";
+      if (/IndentationError/i.test(msg)) return "💡 Tip: Python uses spaces to group code. Make sure lines after ':' are indented by 4 spaces, and normal lines start at the very left edge.";
+      if (/NameError/i.test(msg)) {
+        const m = msg.match(/name '([^']+)'/i);
+        const word = m ? m.at(1) : "that word";
+        return '💡 Tip: Python doesn\'t recognize "' + word + '". Check your spelling, make sure you created the variable before using it, or put quotes around text.';
+      }
+      if (/TypeError/i.test(msg)) return "💡 Tip: You're mixing incompatible types (like adding text + a number). Use str() to turn numbers into text, or int(input()) to turn input into a number.";
+      if (/ValueError/i.test(msg)) return "💡 Tip: int() received text that isn't a valid whole number. Make sure you type digits only when the program asks for a number.";
+      if (/IndexError/i.test(msg)) return "💡 Tip: That list index is out of range. Remember Python starts counting items at 0, so a 3-item list only has indexes 0, 1, and 2.";
+      if (/ZeroDivisionError/i.test(msg)) return "💡 Tip: You tried to divide by 0, which isn't allowed in math or Python.";
+      return "💡 Tip: Read the line number in the error above and check that line (and the line right above it) for typos.";
+    }
+
+    let isRunning = false, stopFlag = false;
+    const runBtn = document.getElementById("run"), xrayBox = document.getElementById("xrayBox");
+
+    function setRunning(state) { isRunning = state; runBtn.textContent = state ? "Stop" : "Run"; runBtn.classList.toggle("btn-stop", state); }
+    function toggleXray() { xrayBox.classList.toggle("open"); }
+
+    function renderXray(mod) {
+      const scope = (mod && mod.$d) ? mod.$d : (Sk.globals || {});
+      const chips = [];
+      for (const [k, val] of Object.entries(scope)) {
+        if (k.startsWith("_") || !val) continue;
+        if (val.tp$name === "module" || (Sk.builtin.module && val instanceof Sk.builtin.module)) continue;
+        if (Sk.builtin.func && val instanceof Sk.builtin.func) continue;
+        if (Sk.builtin.type && val instanceof Sk.builtin.type) continue;
+        let repr = "";
+        try {
+          const r = Sk.misceval.objectRepr(val);
+          repr = (r && r.v !== undefined) ? String(r.v) : String(r);
+        } catch (e) { repr = String(val); }
+        chips.push('<span class="x-chip"><b>' + k + '</b> = ' + repr.replace(/</g, "&lt;") + '</span>');
+      }
+      xrayBox.innerHTML = chips.length ? chips.join("") : '<span style="color:var(--muted)">No variables found in this run.</span>';
+    }
+
+    function go() {
+      if (isRunning) { stopFlag = true; tip.textContent = "Stopping script..."; return; }
+      if (typeof Sk === "undefined") { out.textContent = "Missing skulpt files."; return; }
+      if (ed.querySelector(".hole:empty")) { out.textContent = "Tip: Fill in all white boxes first!"; return; }
+
+      const cleanCode = ed.innerText.replace(/\u00a0/g, " ");
+      const usesTurtle = /\bturtle\b/.test(cleanCode);
+      stopFlag = false; setRunning(true); out.textContent = ""; tbox.innerHTML = "";
+      tbox.style.display = usesTurtle ? "block" : "none";
+      pngBtn.style.display = usesTurtle ? "inline-block" : "none";
+
+      Sk.TurtleGraphics = { target: "tbox", width: 320, height: 240 };
+      Sk.configure({
+        output: text => { out.textContent += text; out.scrollTop = out.scrollHeight; },
+        read: builtinRead,
+        yieldLimit: 100,
+        execLimit: Number.POSITIVE_INFINITY,
+        killableWhile: true,
+        killableFor: true,
+        inputfun: promptText => {
+          if (stopFlag) throw "Stopped by user";
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {
+              if (stopFlag) return reject("Stopped by user");
+              const ans = prompt(promptText || "Python is asking for input:");
+              if (ans === null) return reject("Input cancelled");
+              out.textContent += ans + "\n"; out.scrollTop = out.scrollHeight;
+              resolve(ans);
+            }, 1000);
+          });
+        },
+        inputfunTakesPrompt: true,
+        __future__: Sk.python3
+      });
+
+      Sk.misceval.asyncToPromise(() =>
+        Sk.importMainWithBody("<stdin>", false, cleanCode, true),
+        { "*": () => { if (stopFlag) throw "Stopped by user"; } }
+      ).then(mod => {
+        setRunning(false);
+        renderXray(mod);
+      }).catch(err => {
+        setRunning(false);
+        const errText = err.toString();
+        out.textContent += "\n" + (stopFlag ? "🛑 Stopped by user." : "Error: " + errText + "\n\n" + explainError(errText));
+      });
+    }
+
+    window.onload = () => {
+      if (typeof Sk !== "undefined") { st.textContent = "Ready (Offline)"; st.style.color = "#a6da95"; }
+      else { st.textContent = "Missing Files"; st.style.color = "#ed8796"; }
+
+      applyTheme(themeIdx);
+      const keys = Object.keys(customColors);
+      if (keys.length) {
+        keys.forEach(k => document.documentElement.style.setProperty(k, customColors[k]));
+        themeBtn.textContent = "Theme: Custom";
+      }
+      syncPickers();
+      const savedFont = localStorage.getItem("pyblocks_font");
+      if (savedFont !== null) changeFont(parseInt(savedFont, 10) - 16);
+      const savedCode = localStorage.getItem("pyblocks_code");
+      if (savedCode !== null) ed.innerHTML = savedCode;
+      renderMenu();
+      syncEditor();
+    };
+  </script>
+</body>
+</html>
