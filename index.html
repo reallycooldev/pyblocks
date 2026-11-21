@@ -165,6 +165,52 @@
       flex: 1; color: var(--out-text); padding: 12px;
       font-family: monospace; white-space: pre-wrap; line-height: 1.4;
     }
+        .xray-box {
+      display: none; background: var(--panel); border-top: 1px solid var(--border);
+      padding: 8px 12px; font-family: monospace; font-size: 0.82rem;
+      max-height: 120px; overflow-y: auto; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .xray-box.open { display: flex; }
+    .x-chip {
+      background: var(--bar); border: 1px solid var(--border);
+      padding: 3px 8px; border-radius: 4px; color: var(--code);
+    }
+    .x-chip b { color: var(--accent); }
+    .custom-bar {
+      display: none; background: var(--panel); padding: 8px 12px;
+      border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap;
+      align-items: center; font-size: 0.78rem;
+    }
+    .custom-bar.open { display: flex; }
+    .cpick { display: flex; align-items: center; gap: 4px; }
+    .cpick input[type="color"] {
+      width: 26px; height: 24px; border: 1px solid var(--border);
+      background: none; cursor: pointer; padding: 0; border-radius: 3px;
+    }
+
+    .xray-box {
+      display: none; background: var(--panel); border-top: 1px solid var(--border);
+      padding: 8px 12px; font-family: monospace; font-size: 0.82rem;
+      max-height: 120px; overflow-y: auto; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .xray-box.open { display: flex; }
+    .x-chip {
+      background: var(--bar); border: 1px solid var(--border);
+      padding: 3px 8px; border-radius: 4px; color: var(--code);
+    }
+    .x-chip b { color: var(--accent); }
+    .custom-bar {
+      display: none; background: var(--panel); padding: 8px 12px;
+      border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap;
+      align-items: center; font-size: 0.78rem;
+    }
+    .custom-bar.open { display: flex; }
+    .cpick { display: flex; align-items: center; gap: 4px; }
+    .cpick input[type="color"] {
+      width: 26px; height: 24px; border: 1px solid var(--border);
+      background: none; cursor: pointer; padding: 0; border-radius: 3px;
+    }
+
     @media (max-width: 768px) {
       body { height: auto; min-height: 100vh; }
       .main, .cols { flex-direction: column; overflow: visible; }
@@ -187,11 +233,24 @@
         <option value="1">2. Number Guessing Game</option>
         <option value="2">3. Countdown Timer</option>
       </select>
-      <button class="btn-dark" id="themeBtn" onclick="cycleTheme()">Theme: Blue</button>
+      <button class="btn-dark" id="themeBtn" onclick="cycleTheme()">Theme: Blue
+      </button>
+      <button class="btn-dark" onclick="toggleCustomTheme()" title="Custom Colours">🎨</button>
+      </button>
+      <span id="st" style="font-size:0.78rem">Checking...</span>
       <span id="st" style="font-size:0.78rem">Checking...</span>
     </div>
   </header>
-
+  
+  <div class="custom-bar" id="customBar">
+    <label class="cpick">Editor BG <input type="color" id="c_bg" value="#1e1e2e" oninput="setCustomColor('--bg', this.value)"></label>
+    <label class="cpick">Panels <input type="color" id="c_panel" value="#181825" oninput="setCustomColor('--panel', this.value); setCustomColor('--bar', this.value); setCustomColor('--tip', this.value)"></label>
+    <label class="cpick">Accent <input type="color" id="c_acc" value="#8aadf4" oninput="setCustomColor('--accent', this.value)"></label>
+    <label class="cpick">Code <input type="color" id="c_code" value="#f4dbd6" oninput="setCustomColor('--code', this.value); setCustomColor('--text', this.value)"></label>
+    <label class="cpick">Out BG <input type="color" id="c_outbg" value="#11111b" oninput="setCustomColor('--out-bg', this.value)"></label>
+    <label class="cpick">Out Text <input type="color" id="c_out" value="#a6da95" oninput="setCustomColor('--out-text', this.value)"></label>
+    <button class="btn-dark" onclick="resetCustomTheme()">Reset</button>
+  </div>  
   <div class="main">
     <div class="side" id="side">
       <div class="search-box">
@@ -258,11 +317,13 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
             <div class="row">
               <button class="btn-dark" id="pngBtn" style="display:none" onclick="savePng()">Save PNG</button>
               <button class="btn-dark" onclick="clearOut()">Clear</button>
+               <button class="btn-dark" id="xrayBtn" onclick="toggleXray()">🔍 X-Ray</button>
             </div>
           </div>
           <div class="out-wrap">
             <div id="tbox"></div>
-            <pre id="out">Ready!</pre>
+            <pre id="out">Ready!</pre
+            <div class="xray-box" id="xrayBox"><span style="color:var(--muted)">Run code to inspect variables...</span></div>
           </div>
         </div>
       </div>
@@ -699,13 +760,112 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
       return Sk.builtinFiles["files"][x];
     }
 
+    let customColors = JSON.parse(localStorage.getItem("pyblocks_custom_colors") || "{}");
+
+    function syncPickers() {
+      const s = getComputedStyle(document.documentElement);
+      const map = [
+        ["c_bg", "--bg"],
+        ["c_panel", "--panel"],
+        ["c_acc", "--accent"],
+        ["c_code", "--code"],
+        ["c_outbg", "--out-bg"],
+        ["c_out", "--out-text"]
+      ];
+      map.forEach(([id, cssVar]) => {
+        const el = document.getElementById(id);
+        let hex = s.getPropertyValue(cssVar).trim();
+        if (hex.startsWith("#") && hex.length === 4) {
+          hex = "#" + hex + hex + hex + hex + hex + hex;
+        }
+        if (el && hex.startsWith("#")) el.value = hex;
+      });
+    }
+    
+    function toggleCustomTheme() {
+      syncPickers();
+      document.getElementById("customBar").classList.toggle("open");
+    }
+    
+    function setCustomColor(cssVar, val) {
+      document.documentElement.style.setProperty(cssVar, val);
+      customColors[cssVar] = val;
+      localStorage.setItem("pyblocks_custom_colors", JSON.stringify(customColors));
+      themeBtn.textContent = "Theme: Custom";
+    }
+    
+    function resetCustomTheme() {
+      customColors = {};
+      localStorage.removeItem("pyblocks_custom_colors");
+      document.documentElement.style.cssText = "";
+      applyTheme(themeIdx);
+      syncPickers();
+    }
+    
+    (function loadSavedCustomOnBoot() {
+      const keys = Object.keys(customColors);
+      if (keys.length) {
+        keys.forEach(k => document.documentElement.style.setProperty(k, customColors[k]));
+        themeBtn.textContent = "Theme: Custom";
+      }
+      syncPickers();
+      const origApplyTheme = applyTheme;
+      applyTheme = function(idx) {
+        document.documentElement.style.cssText = "";
+        localStorage.removeItem("pyblocks_custom_colors");
+        customColors = {};
+        origApplyTheme(idx);
+        syncPickers();
+      };
+    })();
+    
+    function explainError(msg) {
+      if (/SyntaxError/i.test(msg)) return "💡 Tip: Check for a missing colon (:) at the end of an if/for/while line, an unclosed bracket or quote, or using '=' instead of '==' inside an if check.";
+      if (/IndentationError/i.test(msg)) return "💡 Tip: Python uses spaces to group code. Make sure lines after ':' are indented by 4 spaces, and normal lines start at the very left edge.";
+      if (/NameError/i.test(msg)) {
+        const m = msg.match(/name '([^']+)'/i);
+        const word = m ? m.at(1) : "that word";
+        return '💡 Tip: Python doesn\'t recognize "' + word + '". Check your spelling, make sure you created the variable before using it, or put quotes around text.';
+      }
+      if (/TypeError/i.test(msg)) return "💡 Tip: You're mixing incompatible types (like adding text + a number). Use str() to turn numbers into text, or int(input()) to turn input into a number.";
+      if (/ValueError/i.test(msg)) return "💡 Tip: int() received text that isn't a valid whole number. Make sure you type digits only when the program asks for a number.";
+      if (/IndexError/i.test(msg)) return "💡 Tip: That list index is out of range. Remember Python starts counting items at 0, so a 3-item list only has indexes 0, 1, and 2.";
+      if (/ZeroDivisionError/i.test(msg)) return "💡 Tip: You tried to divide by 0, which isn't allowed in math or Python.";
+      return "💡 Tip: Read the line number in the error above and check that line (and the line right above it) for typos.";
+    }
+
     let isRunning = false, stopFlag = false;
     const runBtn = document.getElementById("run");
+    const xrayBox = document.getElementById("xrayBox");
 
     function setRunning(state) {
       isRunning = state;
       runBtn.textContent = state ? "Stop" : "Run";
       runBtn.classList.toggle("btn-stop", state);
+    }
+
+    function toggleXray() {
+      xrayBox.classList.toggle("open");
+    }
+
+    function renderXray(mod) {
+      const scope = (mod && mod.$d) ? mod.$d : (Sk.globals || {});
+      const chips = [];
+      for (const [k, val] of Object.entries(scope)) {
+        if (k.startsWith("_") || !val) continue;
+        if (val.tp$name === "module" || (Sk.builtin.module && val instanceof Sk.builtin.module)) continue;
+        if (Sk.builtin.func && val instanceof Sk.builtin.func) continue;
+        if (Sk.builtin.type && val instanceof Sk.builtin.type) continue;
+        let repr = "";
+        try {
+          const r = Sk.misceval.objectRepr(val);
+          repr = (r && r.v !== undefined) ? String(r.v) : String(r);
+        } catch (e) { repr = String(val); }
+        chips.push('<span class="x-chip"><b>' + k + '</b> = ' + repr.replace(/</g, "&lt;") + '</span>');
+      }
+      xrayBox.innerHTML = chips.length
+        ? chips.join("")
+        : '<span style="color:var(--muted)">No variables found in this run.</span>';
     }
 
     function go(isGrading = false, mockInputs = [], expected = "") {
@@ -725,10 +885,14 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
 
       Sk.TurtleGraphics = { target: "tbox", width: 320, height: 240 };
       Sk.configure({
-        output: text => { out.textContent += text; capturedOut += text; },
+        output: text => {
+          out.textContent += text;
+          capturedOut += text;
+          out.scrollTop = out.scrollHeight;
+        },
         read: builtinRead,
         yieldLimit: 100,
-        execLimit: 30000,
+        execLimit: Number.POSITIVE_INFINITY,
         killableWhile: true,
         killableFor: true,
         inputfun: promptText => {
@@ -739,10 +903,16 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
             out.textContent += (promptText || "") + val + "\n";
             return val;
           }
-          const ans = prompt(promptText || "Python is asking for input:");
-          if (ans === null) throw "Input cancelled";
-          out.textContent += ans + "\n";
-          return ans;
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {
+              if (stopFlag) return reject("Stopped by user");
+              const ans = prompt(promptText || "Python is asking for input:");
+              if (ans === null) return reject("Input cancelled");
+              out.textContent += ans + "\n";
+              out.scrollTop = out.scrollHeight;
+              resolve(ans);
+            }, 1000);
+          });
         },
         inputfunTakesPrompt: true,
         __future__: Sk.python3
@@ -751,8 +921,9 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
       Sk.misceval.asyncToPromise(() =>
         Sk.importMainWithBody("<stdin>", false, cleanCode, true),
         { "*": () => { if (stopFlag) throw "Stopped by user"; } }
-      ).then(() => {
+      ).then(mod => {
         setRunning(false);
+        renderXray(mod);
         if (isGrading) {
           let passed = false;
           if (expected.startsWith("TURTLE:")) {
@@ -768,17 +939,18 @@ print("Hello " + name.capitalize() + "! Your lucky number is:", lucky)</div>
               localStorage.setItem("pyblocks_done_v4", JSON.stringify(completed));
               updateLearnBtn();
             }
-            out.textContent += `\n\n✅ PASSED! (${completed.length}/48 completed) — Tap Next ▶!`;
+            out.textContent += "\n\n✅ PASSED! (" + completed.length + "/48 completed) — Tap Next ▶!";
             pickStage(curStg);
           } else {
-            out.textContent += `\n\n❌ Not quite!\nExpected:\n${expected}\n\nYour code printed:\n${capturedOut.trim() || "(nothing)"}`;
+            out.textContent += "\n\n❌ Not quite!\nExpected:\n" + expected + "\n\nYour code printed:\n" + (capturedOut.trim() || "(nothing)");
           }
         }
       }).catch(err => {
         setRunning(false);
-        out.textContent += "\n" + (stopFlag ? "🛑 Stopped by user." : "Error: " + err.toString());
+        const errText = err.toString();
+        out.textContent += "\n" + (stopFlag ? "🛑 Stopped by user." : "Error: " + errText + "\n\n" + explainError(errText));
       });
     }
   </script>
 </body>
-</html>
+  </html>
