@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PyBlocks Studio V7</title>
+  <title>PyBlocks Studio</title>
   <script src="skulpt.min.js"></script>
   <script src="skulpt-stdlib.js"></script>
   <style>
@@ -69,7 +69,7 @@
     <div style="display:flex;align-items:center;gap:6px">
       <button class="btn-dark" onclick="toggleSide()">☰ Blocks</button>
       <button class="btn-dark" onclick="location.href='index.html'">🏠 Menu</button>
-      <strong style="color:var(--accent)">PyBlocks Studio</strong>
+      <strong style="color:var(--accent)">PyBlocks Studio V8</strong>
     </div>
     <div class="h-tools">
       <button class="btn-learn" onclick="location.href='courses.html'">🎓 Courses</button>
@@ -160,7 +160,13 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       [".replace()", "___ = '___'\nprint(___.replace('___', '___'))", "Swaps one word for another inside text.", "c1"],
       ["def Function", "def ___(___):\n    return '___' + ___\nprint(___('___'))", "Creates a reusable custom function.", "c1"],
       ["Random", "import random\n___ = random.randint(___, ___)\nprint(___)", "Picks a random number between min and max.", "c1"],
-      ["Turtle Setup", "import turtle\nt = turtle.Turtle()\nt.color('___')\nt.forward(___)", "Sets pen color and draws forward.", "c1"]
+      ["Turtle Setup", "import turtle\nt = turtle.Turtle()\nt.color('___')\nt.forward(___)", "Sets pen color and draws forward.", "c1"],
+
+      ["Polygon Loop", "import turtle\nt = turtle.Turtle()\nfor i in range(___):\n    t.forward(___)\n    t.right(___)", "Draws any regular polygon using equal turns.", "c2"],
+      ["Filled Shape", "import turtle\nt = turtle.Turtle()\nt.fillcolor('___')\nt.begin_fill()\nt.circle(___)\nt.end_fill()", "Fills a shape with solid color.", "c2"],
+      ["Jump Move", "t.penup()\nt.goto(___, ___)\nt.pendown()", "Moves the turtle without drawing a line.", "c2"],
+      ["Rainbow Spiral", "import turtle\nt = turtle.Turtle()\nt.speed(0)\ncols = ['___', '___', '___']\nfor i in range(36):\n    t.color(cols[i % 3])\n    t.forward(i * 3)\n    t.right(___)", "Cycles colors in a growing spiral.", "c2"],
+      ["Starburst", "import turtle\nt = turtle.Turtle()\nfor i in range(5):\n    t.forward(___)\n    t.right(144)", "Draws a 5-point star with 144-degree turns.", "c2"]
     ];
 
     const examples = [
@@ -178,6 +184,11 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     const out = document.getElementById("out"), tip = document.getElementById("tip"), st = document.getElementById("st");
     const tbox = document.getElementById("tbox"), pngBtn = document.getElementById("pngBtn"), themeBtn = document.getElementById("themeBtn");
 
+    function unlockAch(key) {
+      const ach = JSON.parse(localStorage.getItem("pyblocks_ach") || "{}");
+      if (!ach[key]) { ach[key] = true; localStorage.setItem("pyblocks_ach", JSON.stringify(ach)); }
+    }
+
     function syncPickers() {
       const s = getComputedStyle(document.documentElement);
       [["c_bg","--bg"],["c_panel","--panel"],["c_acc","--accent"],["c_code","--code"],["c_outbg","--out-bg"],["c_out","--out-text"]].forEach(([id, v]) => {
@@ -189,7 +200,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     }
 
     function toggleCustomTheme() { syncPickers(); document.getElementById("customBar").classList.toggle("open"); }
-    function setCustomColor(v, val) { document.documentElement.style.setProperty(v, val); customColors[v] = val; localStorage.setItem("pyblocks_custom_colors", JSON.stringify(customColors)); themeBtn.textContent = "Theme: Custom"; }
+    function setCustomColor(v, val) { document.documentElement.style.setProperty(v, val); customColors[v] = val; localStorage.setItem("pyblocks_custom_colors", JSON.stringify(customColors)); themeBtn.textContent = "Theme: Custom"; unlockAch("customTheme"); }
     function resetCustomTheme() { customColors = {}; localStorage.removeItem("pyblocks_custom_colors"); document.documentElement.style.cssText = ""; applyTheme(themeIdx); syncPickers(); }
     function applyTheme(idx) {
       document.documentElement.style.cssText = ""; localStorage.removeItem("pyblocks_custom_colors"); customColors = {};
@@ -202,8 +213,9 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     function cycleTheme() { applyTheme(themeIdx + 1); }
     function renderMenu() {
       const q = (document.getElementById("search")?.value || "").toLowerCase();
-      const done = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
-      const c1Unlocked = done.length >= 48;
+      const c1Done = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
+      const c2Done = JSON.parse(localStorage.getItem("pyblocks_c2_done") || "[]");
+      const c1Open = c1Done.length >= 48, c2Open = c2Done.length >= 24;
       menu.innerHTML = "";
 
       const addHeader = (title, tag) => {
@@ -217,7 +229,8 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
         if (q && !lbl.toLowerCase().includes(q) && !code.toLowerCase().includes(q)) return;
         const d = document.createElement("div");
         d.className = "blk";
-        const badge = tier === "c1" ? '<span class="c-badge">Course 1</span>' : "";
+        const tag = tier === "c1" ? "Course 1" : (tier === "c2" ? "Course 2" : "");
+        const badge = tag ? '<span class="c-badge">' + tag + '</span>' : "";
         const preview = code.split("\n").at(0).replace(/</g, "&lt;");
         d.innerHTML = badge + "<strong>" + lbl + "</strong><small>" + preview + "</small>";
         d.onclick = () => insertBlock(code, info);
@@ -225,23 +238,15 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       };
 
       addHeader("⚡ Starter Blueprints", "Unlocked");
-      blocks.filter(b => b[3] === "starter").forEach(addBlock);
+      blocks.filter(b => b.at(3) === "starter").forEach(addBlock);
 
-      addHeader("🎓 Course 1 Blueprints", c1Unlocked ? "Unlocked" : done.length + "/48");
-      if (c1Unlocked || q) {
-        blocks.filter(b => b[3] === "c1").forEach(addBlock);
-      } else {
-        const lock = document.createElement("div");
-        lock.className = "lock-card";
-        lock.innerHTML = "🔒 Beat <b>Course 1</b> (" + done.length + "/48) to unlock f-Strings, {}, Functions & more!<br><small>(Search to preview or type anytime)</small>";
-        menu.appendChild(lock);
-      }
+      addHeader("🎓 Course 1 Blueprints", c1Open ? "Unlocked" : c1Done.length + "/48");
+      if (c1Open || q) blocks.filter(b => b.at(3) === "c1").forEach(addBlock);
+      else menu.insertAdjacentHTML("beforeend", '<div class="lock-card">🔒 Beat <b>Course 1</b> (' + c1Done.length + '/48) to unlock f-Strings, {}, Functions & more!</div>');
 
-      addHeader("🐢 Course 2 Blueprints", "PBS8");
-      const c2 = document.createElement("div");
-      c2.className = "lock-card";
-      c2.textContent = "🔒 Turtle Art & Geometry — Coming in PBS8!";
-      menu.appendChild(c2);
+      addHeader("🐢 Course 2 Blueprints", c2Open ? "Unlocked" : c2Done.length + "/24");
+      if (c2Open || q) blocks.filter(b => b.at(3) === "c2").forEach(addBlock);
+      else menu.insertAdjacentHTML("beforeend", '<div class="lock-card">🔒 Beat <b>Course 2</b> (' + c2Done.length + '/24) to unlock Polygons, Fills & Spirals!</div>');
     }
 
     function insertBlock(code, info) {
@@ -267,7 +272,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     ed.addEventListener("input", syncEditor);
 
     function loadEx(i) { if (examples[i]) { ed.textContent = examples[i]; tip.textContent = "Loaded Example!"; syncEditor(); } }
-    function openFile(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { ed.textContent = ev.target.result; syncEditor(); }; r.readAsText(f); }
+    function openFile(e) { const f = e.target.files.item(0); if (!f) return; const r = new FileReader(); r.onload = ev => { ed.textContent = ev.target.result; syncEditor(); }; r.readAsText(f); }
     function saveCode() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ed.innerText.replace(/\u00a0/g, " ")], { type: "text/plain" })); a.download = "main.py"; a.click(); }
     function savePng() { const c = tbox.querySelector("canvas"); if (!c) return; const a = document.createElement("a"); a.download = "pyblocks_art.png"; a.href = c.toDataURL("image/png"); a.click(); }
     function clearAll() { ed.innerHTML = ""; out.textContent = ""; tbox.innerHTML = ""; tbox.style.display = "none"; pngBtn.style.display = "none"; localStorage.removeItem("pyblocks_code"); syncEditor(); }
@@ -337,7 +342,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     const runBtn = document.getElementById("run"), xrayBox = document.getElementById("xrayBox");
 
     function setRunning(state) { isRunning = state; runBtn.textContent = state ? "Stop" : "Run"; runBtn.classList.toggle("btn-stop", state); }
-    function toggleXray() { xrayBox.classList.toggle("open"); }
+    function toggleXray() { xrayBox.classList.toggle("open"); if (xrayBox.classList.contains("open")) unlockAch("xray"); }
 
     function renderXray(mod) {
       const scope = (mod && mod.$d) ? mod.$d : (Sk.globals || {});
@@ -358,7 +363,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     }
 
     function go() {
-      if (isRunning) { stopFlag = true; tip.textContent = "Stopping script..."; return; }
+      if (isRunning) { stopFlag = true; unlockAch("stopped"); tip.textContent = "Stopping script..."; return; }
       if (typeof Sk === "undefined") { out.textContent = "Missing skulpt files."; return; }
       if (ed.querySelector(".hole:empty")) { out.textContent = "Tip: Fill in all white boxes first!"; return; }
 
@@ -401,6 +406,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       }).catch(err => {
         setRunning(false);
         const errText = err.toString();
+        if (/ZeroDivisionError/i.test(errText)) unlockAch("zeroDiv");
         out.textContent += "\n" + (stopFlag ? "🛑 Stopped by user." : "Error: " + errText + "\n\n" + explainError(errText));
       });
     }

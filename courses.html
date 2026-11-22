@@ -59,25 +59,28 @@
 
   <div class="hub" id="hubView">
     <h1>🎓 Course Academy</h1>
-    <p style="color:var(--muted)">Complete courses to master Python and unlock new block blueprints in Studio.</p>
+    <p style="color:var(--muted)">Complete courses to earn XP and unlock new block blueprints in Studio.</p>
     <div class="c-grid">
       <div class="c-card active">
         <div>
           <h3>Course 1: Python Fundamentals</h3>
-          <p>48 interactive stages across 6 sections: Print, Variables, Strings, Decisions, Loops & Lists, and Turtle Art.</p>
+          <p>48 interactive stages across 6 sections: Print, Variables, Strings, Decisions, Loops & Lists, and Turtle Intro.</p>
         </div>
         <div>
           <div style="font-size:0.82rem;font-weight:bold;margin-bottom:8px" id="c1Stat">Progress: 0 / 48</div>
-          <button style="width:100%" onclick="openCourse1()">Start / Continue Course 1 ▶</button>
+          <button style="width:100%" onclick="openCourse(1)">Start / Continue Course 1 ▶</button>
         </div>
       </div>
 
-      <div class="c-card">
+      <div class="c-card active">
         <div>
           <h3>Course 2: Turtle Art & Geometry</h3>
-          <p>Master angles, custom shapes, rainbow spirals, and mathematical patterns.</p>
+          <p>24 stages across 3 sections: Polygons & Angles, Pen Control & Fills, and Rainbow Spirals.</p>
         </div>
-        <button class="btn-dark" disabled style="width:100%;opacity:0.6">🔒 Coming in PBS8</button>
+        <div>
+          <div style="font-size:0.82rem;font-weight:bold;margin-bottom:8px" id="c2Stat">Progress: 0 / 24</div>
+          <button style="width:100%" onclick="openCourse(2)">Start / Continue Course 2 ▶</button>
+        </div>
       </div>
 
       <div class="c-card">
@@ -99,7 +102,7 @@
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn-dark" onclick="pickStage(Math.max(0, curStg - 1))">◀ Prev</button>
-          <button class="btn-dark" onclick="pickStage(Math.min(stages.length - 1, curStg + 1))">Next ▶</button>
+          <button class="btn-dark" onclick="pickStage(Math.min(activeStages.length - 1, curStg + 1))">Next ▶</button>
         </div>
       </div>
       <div id="stgDesc" style="font-size:0.9rem;line-height:1.4"></div>
@@ -124,7 +127,7 @@
     </div>
   </div>
   <script>
-    const stages = [
+    const c1Stages = [
       ["1.1 Hello World", "Print exact text: Hello Python!", "Use print('Hello Python!')", "print('')", [], "Hello Python!"],
       ["1.2 Two Lines", "Print Line 1 on the first line and Line 2 on the second line.", "Use two print() calls.", "print('Line 1')\n", [], "Line 1\nLine 2"],
       ["1.3 Math Print", "Print the result of 12 + 8.", "No quotes around math: print(12 + 8)", "print()", [], "20"],
@@ -166,7 +169,7 @@
       ["5.3 While Countdown", "Use a while loop to print 3, 2, 1.", "Decrease n by 1 each loop.", "n = 3\nwhile n > 0:\n    print(n)\n    ", [], "3\n2\n1"],
       ["5.4 Loop List", "Print each item in ['a', 'b', 'c'].", "for x in items: print(x)", "items = ['a', 'b', 'c']\n", [], "a\nb\nc"],
       ["5.5 Append Item", "Append 'Gold' to bag and print bag.", "Use bag.append('Gold')", "bag = ['Map']\n\nprint(bag)", [], "['Map', 'Gold']"],
-      ["5.6 Sum Numbers", "Add up [10, 20, 30] and print the total (60).", "Use sum(nums) or a loop.", "nums = [10, 20, 30]\nprint()", [], "60"],
+      ["5.6 Sum Numbers", "Add up and print the total (60).", "Use sum(nums) or a loop.", "nums = [10, 20, 30]\nprint()", [], "60"],
       ["5.7 Dictionary Lookup", "Print the 'hp' value from hero = {'name': 'Percy', 'hp': 100}.", "Use hero['hp']", "hero = {'name': 'Percy', 'hp': 100}\nprint()", [], "100"],
       ["5.8 BOSS TEST: Evens", "No-Hint Boss! Print 2, 4, 6 using a loop.", "No hints on Boss Tests!", "", [], "2\n4\n6"],
 
@@ -179,10 +182,39 @@
       ["6.7 Thick Pen", "Set t.pensize(5) and draw a red line forward(100).", "Combine pensize(5), color('red'), forward(100)", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,pensize,forward"],
       ["6.8 BOSS TEST: Starburst", "No-Hint Boss! Use a loop and turtle to draw a multi-point star!", "No hints on Boss Tests!", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward"]
     ];
+    const c2Stages = [
+      ["1.1 Pentagon", "Draw a 5-sided pentagon using 72-degree turns.", "Loop 5 times with forward(60) and right(72).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward,72"],
+      ["1.2 Hexagon", "Draw a 6-sided hexagon using 60-degree turns.", "Loop 6 times with forward(50) and right(60).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward,60"],
+      ["1.3 Octagon", "Draw an 8-sided octagon using 45-degree turns.", "Loop 8 times with forward(40) and right(45).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward,45"],
+      ["1.4 Fast Turtle", "Set t.speed(0) and draw a circle of radius 50.", "Use t.speed(0) and t.circle(50).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,speed,circle"],
+      ["1.5 Left Spiral", "Turn left(91) inside a loop to make a square spiral.", "for i in range(20): t.forward(i * 4); t.left(91)", "import turtle\nt = turtle.Turtle()\nt.speed(0)\n", [], "TURTLE:turtle,for,forward,left"],
+      ["1.6 Concentric Circles", "Draw 3 circles of different sizes in a loop.", "Use t.circle(i * 15) inside a loop.", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,circle"],
+      ["1.7 Diamond", "Turn left(45) first, then draw a square.", "Rotate 45 degrees before your 4-loop.", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,left,for,forward"],
+      ["1.8 BOSS TEST: 12-Gon", "No-Hint Boss! Draw a 12-sided polygon (30-degree turns)!", "No hints on Boss Tests!", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward,30"],
+
+      ["2.1 Pen Lift", "Use t.penup(), move forward(50), then t.pendown() and draw forward(50).", "Lift pen before moving so there's a gap.", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,penup,pendown,forward"],
+      ["2.2 Teleport Goto", "Lift pen, use t.goto(-50, 50), put pen down, and draw a circle(30).", "Use penup(), goto(-50, 50), pendown().", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,goto,circle"],
+      ["2.3 Dashed Line", "Use a loop with penup() and pendown() to draw 5 dashes.", "Inside range(5): pendown, forward(15), penup, forward(10).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,penup,pendown"],
+      ["2.4 Filled Square", "Use t.begin_fill() and t.end_fill() around a square.", "Set t.fillcolor('cyan') before begin_fill().", "import turtle\nt = turtle.Turtle()\nt.fillcolor('cyan')\n", [], "TURTLE:turtle,begin_fill,end_fill"],
+      ["2.5 Red Triangle", "Draw a filled red triangle using begin_fill() and end_fill().", "Use fillcolor('red') and 120-degree turns.", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,begin_fill,end_fill,120"],
+      ["2.6 Dot Stamp", "Draw a big dot using t.dot(40, 'purple').", "Call t.dot(40, 'purple').", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,dot"],
+      ["2.7 Two Shapes", "Draw a square, penup(), goto(80, 0), pendown(), and draw a circle(30).", "Use goto() between the two shapes.", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,penup,goto,pendown"],
+      ["2.8 BOSS TEST: Traffic Light", "No-Hint Boss! Draw 3 stacked colored dots using penup() and goto()!", "No hints on Boss Tests!", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,dot,goto"],
+
+      ["3.1 Color List", "Use colors = ['red', 'blue', 'green'] to draw 3 colored lines.", "Loop over colors and set t.color(c).", "import turtle\nt = turtle.Turtle()\ncolors = ['red', 'blue', 'green']\n", [], "TURTLE:turtle,for,color,forward"],
+      ["3.2 Rainbow Wheel", "Cycle colors with colors[i % 4] inside a 16-step loop.", "Turn right(22.5) each step.", "import turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ['red', 'yellow', 'cyan', 'magenta']\n", [], "TURTLE:turtle,for,color,forward"],
+      ["3.3 Growing Web", "Draw a web where forward(i * 3) grows every step.", "Use for i in range(30): with right(61).", "import turtle\nt = turtle.Turtle()\nt.speed(0)\n", [], "TURTLE:turtle,for,forward,right"],
+      ["3.4 Star Polygon", "Draw a 5-point star using 144-degree right turns!", "Loop 5 times with forward(90) and right(144).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,forward,144"],
+      ["3.5 Flower Petals", "Draw 6 circles rotating right(60) after each circle.", "for i in range(6): t.circle(35); t.right(60)", "import turtle\nt = turtle.Turtle()\nt.speed(0)\n", [], "TURTLE:turtle,for,circle,60"],
+      ["3.6 Neon Grid", "Draw 4 parallel lines using penup() and goto().", "Loop i in range(4) and goto(0, i * 20).", "import turtle\nt = turtle.Turtle()\n", [], "TURTLE:turtle,for,goto,forward"],
+      ["3.7 Sunburst", "Draw 12 rays from (0, 0) using forward(70), backward(70), right(30).", "Use backward(70) to return to center.", "import turtle\nt = turtle.Turtle()\nt.speed(0)\n", [], "TURTLE:turtle,for,forward,backward"],
+      ["3.8 BOSS TEST: Masterpiece", "No-Hint Boss! Combine colors, loops, and turns to create your own turtle masterpiece!", "No hints on Boss Tests!", "import turtle\nt = turtle.Turtle()\nt.speed(0)\n", [], "TURTLE:turtle,for,color,forward"]
+    ];
     const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"],["purple","Theme: Purple"],["ocean","Theme: Ocean"],["amber","Theme: Amber"]];
     let themeIdx = parseInt(localStorage.getItem("pyblocks_theme") || "0", 10);
-    let completed = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
-    let curStg = parseInt(localStorage.getItem("pyblocks_stg") || "0", 10);
+    let c1Done = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
+    let c2Done = JSON.parse(localStorage.getItem("pyblocks_c2_done") || "[]");
+    let activeCourse = 1, activeStages = c1Stages, curStg = 0;
     const ed = document.getElementById("ed"), out = document.getElementById("out"), tbox = document.getElementById("tbox");
 
     function applyTheme(idx) {
@@ -198,7 +230,8 @@
     function cycleTheme() { applyTheme(themeIdx + 1); }
 
     function updateHubStats() {
-      document.getElementById("c1Stat").textContent = "Progress: " + completed.length + " / " + stages.length + (completed.length >= 48 ? " 🏆 UNLOCKED!" : "");
+      document.getElementById("c1Stat").textContent = "Progress: " + c1Done.length + " / 48" + (c1Done.length >= 48 ? " 🏆 UNLOCKED!" : "");
+      document.getElementById("c2Stat").textContent = "Progress: " + c2Done.length + " / 24" + (c2Done.length >= 24 ? " 🏆 UNLOCKED!" : "");
     }
 
     function showHub() {
@@ -207,7 +240,11 @@
       document.getElementById("courseView").style.display = "none";
     }
 
-    function openCourse1() {
+    function openCourse(num) {
+      activeCourse = num;
+      activeStages = num === 1 ? c1Stages : c2Stages;
+      curStg = parseInt(localStorage.getItem(num === 1 ? "pyblocks_stg" : "pyblocks_c2_stg") || "0", 10);
+      if (curStg >= activeStages.length) curStg = 0;
       document.getElementById("hubView").style.display = "none";
       document.getElementById("courseView").style.display = "flex";
       pickStage(curStg);
@@ -215,11 +252,12 @@
 
     function buildSelect() {
       const sel = document.getElementById("stgSel");
+      const doneArr = activeCourse === 1 ? c1Done : c2Done;
       sel.innerHTML = "";
-      stages.forEach((s, i) => {
+      activeStages.forEach((s, i) => {
         const opt = document.createElement("option");
         opt.value = i;
-        opt.textContent = (completed.includes(i) ? "✅ " : "") + s[0];
+        opt.textContent = (doneArr.includes(i) ? "✅ " : "") + s[0];
         sel.appendChild(opt);
       });
       sel.value = curStg;
@@ -227,9 +265,9 @@
 
     function pickStage(idx) {
       curStg = idx;
-      localStorage.setItem("pyblocks_stg", curStg);
+      localStorage.setItem(activeCourse === 1 ? "pyblocks_stg" : "pyblocks_c2_stg", curStg);
       buildSelect();
-      const s = stages[curStg];
+      const s = activeStages[curStg];
       document.getElementById("stgDesc").textContent = s[1];
       const h = document.getElementById("stgHint");
       h.style.display = "none";
@@ -240,12 +278,11 @@
       tbox.style.display = "none";
     }
 
-    function loadStarter() { ed.value = stages[curStg][3]; }
+    function loadStarter() { ed.value = activeStages[curStg][3]; }
     function toggleHint() {
       const h = document.getElementById("stgHint");
       h.style.display = h.style.display === "none" ? "block" : "none";
     }
-
     function explainError(msg) {
       if (/SyntaxError/i.test(msg)) return "💡 Tip: Check for a missing colon (:) or unclosed quote/bracket.";
       if (/IndentationError/i.test(msg)) return "💡 Tip: Indent lines after ':' by 4 spaces.";
@@ -260,7 +297,7 @@
     }
 
     function execPython(isGrading) {
-      const s = stages[curStg];
+      const s = activeStages[curStg];
       const mockInputs = [...s[4]];
       const expected = s[5];
       const code = ed.value;
@@ -301,16 +338,18 @@
             passed = captured.trim().replace(/\r\n/g, "\n") === expected.trim();
           }
           if (passed) {
-            if (!completed.includes(curStg)) {
-              completed.push(curStg);
-              localStorage.setItem("pyblocks_done_v4", JSON.stringify(completed));
+            const doneArr = activeCourse === 1 ? c1Done : c2Done;
+            const storeKey = activeCourse === 1 ? "pyblocks_done_v4" : "pyblocks_c2_done";
+            if (!doneArr.includes(curStg)) {
+              doneArr.push(curStg);
+              localStorage.setItem(storeKey, JSON.stringify(doneArr));
             }
             buildSelect();
             updateHubStats();
-            out.textContent += "\n\n✅ PASSED! (" + completed.length + "/48)";
-            if (completed.length >= 48) {
-              out.textContent += "\n🎉 COURSE 1 COMPLETE! New Blueprints unlocked in Studio!";
-            }
+            const xpGain = s[0].includes("BOSS") ? 100 : 25;
+            out.textContent += "\n\n✅ PASSED! (+" + xpGain + " XP | " + doneArr.length + "/" + activeStages.length + ")";
+            if (activeCourse === 1 && c1Done.length >= 48) out.textContent += "\n🎉 COURSE 1 COMPLETE! Course 1 Blueprints unlocked in Studio!";
+            if (activeCourse === 2 && c2Done.length >= 24) out.textContent += "\n🐢 COURSE 2 COMPLETE! Turtle Art Blueprints unlocked in Studio!";
           } else {
             out.textContent += "\n\n❌ Not quite!\nExpected:\n" + expected + "\n\nGot:\n" + (captured.trim() || "(nothing)");
           }
