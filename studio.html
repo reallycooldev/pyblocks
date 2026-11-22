@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PyBlocks Studio</title>
+  <title>PyBlocks Studio V9</title>
   <script src="skulpt.min.js"></script>
   <script src="skulpt-stdlib.js"></script>
   <style>
@@ -11,9 +11,10 @@
       --bg: #1e1e2e; --panel: #181825; --bar: #24273a; --tip: #202336;
       --text: #cad3f5; --muted: #8087a2; --accent: #8aadf4; --code: #f4dbd6;
       --out-bg: #11111b; --out-text: #a6da95; --border: #363a4f;
+      --kw: #c6a0f6; --str: #a6da95; --num: #f5a97f; --com: #6e738d;
     }
     [data-theme="midnight"] { --bg: #000000; --panel: #0a0a0a; --bar: #121212; --tip: #0f0f0f; --text: #ffffff; --muted: #888888; --accent: #38bdf8; --code: #f0f9ff; --out-bg: #000000; --out-text: #4ade80; --border: #262626; }
-    [data-theme="light"] { --bg: #f8fafc; --panel: #e2e8f0; --bar: #cbd5e1; --tip: #f1f5f9; --text: #0f172a; --muted: #475569; --accent: #2563eb; --code: #1e293b; --out-bg: #ffffff; --out-text: #15803d; --border: #94a3b8; }
+    [data-theme="light"] { --bg: #f8fafc; --panel: #e2e8f0; --bar: #cbd5e1; --tip: #f1f5f9; --text: #0f172a; --muted: #475569; --accent: #2563eb; --code: #1e293b; --out-bg: #ffffff; --out-text: #15803d; --border: #94a3b8; --kw: #7c3aed; --str: #15803d; --num: #c2410c; --com: #64748b; }
     [data-theme="matrix"] { --bg: #000800; --panel: #001200; --bar: #001f00; --tip: #001700; --text: #00ff41; --muted: #008f11; --accent: #39ff14; --code: #80ff9e; --out-bg: #000300; --out-text: #00ff41; --border: #003b00; }
     [data-theme="red"] { --bg: #1a060a; --panel: #26090f; --bar: #360d16; --tip: #2e0b12; --text: #ffe4e6; --muted: #fda4af; --accent: #fb7185; --code: #fecdd3; --out-bg: #120306; --out-text: #fda4af; --border: #881337; }
     [data-theme="purple"] { --bg: #130924; --panel: #1c0e36; --bar: #28154d; --tip: #211140; --text: #f3e8ff; --muted: #c084fc; --accent: #d8b4fe; --code: #fae8ff; --out-bg: #0b0417; --out-text: #e879f9; --border: #4c1d95; }
@@ -39,15 +40,26 @@
     .cols { display: flex; flex: 1; overflow: hidden; }
     .col { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 0; }
     .bar { background: var(--bar); padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; gap: 6px; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 4px; align-items: center; overflow-x: auto; max-width: 230px; }
+    .tab { background: var(--panel); color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.76rem; white-space: nowrap; }
+    .tab.active { background: var(--bg); color: var(--accent); border-color: var(--accent); font-weight: bold; }
     button, select { background: #a6da95; color: #111; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
     .btn-dark, select { background: var(--bar); color: var(--text); border: 1px solid var(--border); }
     .btn-learn { background: var(--accent); color: #111; }
     .btn-stop { background: #ed8796 !important; color: #111 !important; }
     .ed-wrap { flex: 1; display: flex; overflow: hidden; background: var(--bg); }
     .gutter { width: 38px; background: var(--panel); color: var(--muted); padding: 12px 6px; font-family: monospace; font-size: 16px; text-align: right; user-select: none; border-right: 1px solid var(--border); line-height: 1.45; overflow: hidden; }
-    #ed { flex: 1; background: var(--bg); color: var(--code); padding: 12px; font-family: monospace; font-size: 16px; outline: none; overflow: auto; white-space: pre; line-height: 1.45; }
-    .hole { display: inline-block; min-width: 24px; background: #ffffff; color: #111111; border-radius: 3px; padding: 0 4px; font-weight: bold; outline: 2px solid var(--accent); }
-    pre { flex: 1; background: var(--out-bg); color: var(--out-text); padding: 12px; font-family: monospace; overflow-y: auto; white-space: pre-wrap; font-size: 0.92rem; }
+    .ed-stack { position: relative; flex: 1; overflow: hidden; }
+    #hl, #ed { position: absolute; inset: 0; padding: 12px; font-family: monospace; font-size: 16px; line-height: 1.45; white-space: pre; overflow: auto; margin: 0; }
+    #hl { pointer-events: none; color: var(--code); z-index: 1; }
+    #ed { background: transparent; color: transparent; caret-color: var(--accent); outline: none; z-index: 2; }
+    #ed::selection { background: rgba(138, 173, 244, 0.3); }
+    .tok-kw { color: var(--kw); font-weight: bold; }
+    .tok-str { color: var(--str); }
+    .tok-num { color: var(--num); }
+    .tok-com { color: var(--com); font-style: italic; }
+    .hole { display: inline-block; min-width: 24px; background: #ffffff; color: #111111 !important; border-radius: 3px; padding: 0 4px; font-weight: bold; outline: 2px solid var(--accent); }
+    pre#out { flex: 1; background: var(--out-bg); color: var(--out-text); padding: 12px; font-family: monospace; overflow-y: auto; white-space: pre-wrap; font-size: 0.92rem; }
     #tbox { background: #ffffff; display: none; border-bottom: 1px solid var(--border); text-align: center; padding: 6px; }
     .xray-box { display: none; background: var(--panel); border-top: 1px solid var(--border); padding: 8px 12px; font-family: monospace; font-size: 0.82rem; max-height: 120px; overflow-y: auto; flex-wrap: wrap; gap: 6px; align-items: center; }
     .xray-box.open { display: flex; }
@@ -69,7 +81,7 @@
     <div style="display:flex;align-items:center;gap:6px">
       <button class="btn-dark" onclick="toggleSide()">☰ Blocks</button>
       <button class="btn-dark" onclick="location.href='index.html'">🏠 Menu</button>
-      <strong style="color:var(--accent)">PyBlocks Studio V8</strong>
+      <strong style="color:var(--accent)">PyBlocks Studio V9</strong>
     </div>
     <div class="h-tools">
       <button class="btn-learn" onclick="location.href='courses.html'">🎓 Courses</button>
@@ -102,13 +114,14 @@
       <div class="cols">
         <div class="col">
           <div class="bar">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span>main.py</span>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div class="tabs" id="tabBar"></div>
+              <button class="btn-dark" onclick="addTab()" title="New File">+</button>
               <select onchange="loadEx(this.value); this.value=''">
                 <option value="">Examples...</option>
                 <option value="0">1. Rainbow Vortex</option>
                 <option value="1">2. Number Guessing</option>
-                <option value="2">3. Countdown Timer</option>
+                <option value="2">3. Spy Morse Decoder</option>
               </select>
             </div>
             <div style="display:flex;gap:5px">
@@ -120,10 +133,10 @@
           </div>
           <div class="ed-wrap">
             <div class="gutter" id="gutter">1</div>
-            <div id="ed" contenteditable="true" spellcheck="false">import random
-name = input("What is your name? ")
-lucky = random.randint(1, 100)
-print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
+            <div class="ed-stack">
+              <div id="hl" aria-hidden="true"></div>
+              <div id="ed" contenteditable="true" spellcheck="false"></div>
+            </div>
           </div>
         </div>
 
@@ -166,13 +179,18 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       ["Filled Shape", "import turtle\nt = turtle.Turtle()\nt.fillcolor('___')\nt.begin_fill()\nt.circle(___)\nt.end_fill()", "Fills a shape with solid color.", "c2"],
       ["Jump Move", "t.penup()\nt.goto(___, ___)\nt.pendown()", "Moves the turtle without drawing a line.", "c2"],
       ["Rainbow Spiral", "import turtle\nt = turtle.Turtle()\nt.speed(0)\ncols = ['___', '___', '___']\nfor i in range(36):\n    t.color(cols[i % 3])\n    t.forward(i * 3)\n    t.right(___)", "Cycles colors in a growing spiral.", "c2"],
-      ["Starburst", "import turtle\nt = turtle.Turtle()\nfor i in range(5):\n    t.forward(___)\n    t.right(144)", "Draws a 5-point star with 144-degree turns.", "c2"]
+      ["Starburst", "import turtle\nt = turtle.Turtle()\nfor i in range(5):\n    t.forward(___)\n    t.right(144)", "Draws a 5-point star with 144-degree turns.", "c2"],
+
+      ["Dice Roller", "import random\nroll = random.randint(1, ___)\nprint(f'Rolled: {roll}')", "Rolls a custom-sided die.", "c3"],
+      ["RPG Battle Loop", "hp = ___\nwhile hp > 0:\n    hp -= ___\n    print(f'HP left: {max(0, hp)}')", "Runs a turn-based damage loop.", "c3"],
+      ["Cipher Loop", "res = ''\nfor ch in '___':\n    res += '-' if ch.isupper() else '.'\nprint(res)", "Converts mixed-case text to dots and dashes.", "c3"],
+      ["Try / Except Shield", "try:\n    val = int(input('___: '))\n    print(val)\nexcept ValueError:\n    print('Numbers only!')", "Prevents crashes from invalid user input.", "c3"]
     ];
 
     const examples = [
       "import turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ['red', 'orange', 'yellow', 'green', 'cyan', 'magenta']\nfor i in range(60):\n    t.color(colors[i % 6])\n    t.forward(i * 3)\n    t.right(61)",
       "import random\nsecret = random.randint(1, 20)\nguess = 0\nwhile guess != secret:\n    guess = int(input('Guess (1-20): '))\n    if guess < secret:\n        print('Too low!')\n    elif guess > secret:\n        print('Too high!')\nprint(f'You got it! The number was {secret}')",
-      "import time\nfor i in range(5, 0, -1):\n    print(i)\n    time.sleep(0.5)\nprint('BLAST OFF!')"
+      "morse = {'.-':'A','-...':'B','-.-.':'C','-..':'D','.':'E','..-.':'F','--.':'G','....':'H','..':'I','.---':'J','-.-':'K','.-..':'L','--':'M','-.':'N','---':'O','.--.':'P','--.-':'Q','.-.':'R','...':'S','-':'T','..-':'U','...-':'V','.--':'W','-..-':'X','-.--':'Y','--..':'Z'}\nmsg = input('Mixed-case message: ')\nprint(''.join(morse.get(''.join('-' if c.isupper() else '.' for c in w), '?') for w in msg.split(' ')))"
     ];
 
     const themes = [["default","Theme: Blue"],["midnight","Theme: Midnight"],["light","Theme: Light"],["matrix","Theme: Matrix"],["red","Theme: Red"],["purple","Theme: Purple"],["ocean","Theme: Ocean"],["amber","Theme: Amber"]];
@@ -180,7 +198,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     let customColors = JSON.parse(localStorage.getItem("pyblocks_custom_colors") || "{}");
     let fontSize = 16;
 
-    const menu = document.getElementById("menu"), ed = document.getElementById("ed"), gutter = document.getElementById("gutter");
+    const menu = document.getElementById("menu"), ed = document.getElementById("ed"), hl = document.getElementById("hl"), gutter = document.getElementById("gutter");
     const out = document.getElementById("out"), tip = document.getElementById("tip"), st = document.getElementById("st");
     const tbox = document.getElementById("tbox"), pngBtn = document.getElementById("pngBtn"), themeBtn = document.getElementById("themeBtn");
 
@@ -211,11 +229,67 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       themeBtn.textContent = label; localStorage.setItem("pyblocks_theme", themeIdx); syncPickers();
     }
     function cycleTheme() { applyTheme(themeIdx + 1); }
+    let files = JSON.parse(localStorage.getItem("pyblocks_files_v9") || "null") || [
+      { name: "main.py", code: 'import random\nname = input("What is your name? ")\nlucky = random.randint(1, 100)\nprint(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")' },
+      { name: "cipher.py", code: "# Try the Spy Morse Decoder example or build your own!\nprint('Ready for secret messages')" }
+    ];
+    let curTab = Math.min(parseInt(localStorage.getItem("pyblocks_tab_v9") || "0", 10), files.length - 1);
+
+    function renderTabs() {
+      const bar = document.getElementById("tabBar");
+      bar.innerHTML = "";
+      files.forEach((f, i) => {
+        const t = document.createElement("div");
+        t.className = "tab" + (i === curTab ? " active" : "");
+        t.textContent = f.name + (files.length > 1 && i === curTab ? " ×" : "");
+        t.onclick = () => {
+          if (i === curTab && files.length > 1) {
+            files.splice(i, 1);
+            curTab = Math.max(0, curTab - 1);
+            loadTab(curTab);
+          } else if (i !== curTab) {
+            unlockAch("usedTabs");
+            loadTab(i);
+          }
+        };
+        bar.appendChild(t);
+      });
+    }
+
+    function loadTab(i) {
+      curTab = i;
+      localStorage.setItem("pyblocks_tab_v9", curTab);
+      ed.textContent = files[curTab].code;
+      renderTabs();
+      syncEditor();
+    }
+
+    function addTab() {
+      const name = prompt("New file name (e.g. game.py):", "script" + (files.length + 1) + ".py");
+      if (!name) return;
+      files.push({ name: name.endsWith(".py") ? name : name + ".py", code: "# " + name + "\n" });
+      unlockAch("usedTabs");
+      loadTab(files.length - 1);
+    }
+
+    function highlightPy(raw) {
+      const esc = raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return esc.replace(/(#.*$)|('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|\b(def|return|if|elif|else|for|while|in|import|from|as|try|except|True|False|None|and|or|not|class|pass|break|continue)\b|\b(\d+(?:\.\d+)?)\b/gm,
+        (m, com, str, kw, num) => {
+          if (com) return '<span class="tok-com">' + com + '</span>';
+          if (str) return '<span class="tok-str">' + str + '</span>';
+          if (kw) return '<span class="tok-kw">' + kw + '</span>';
+          if (num) return '<span class="tok-num">' + num + '</span>';
+          return m;
+        });
+    }
+
     function renderMenu() {
       const q = (document.getElementById("search")?.value || "").toLowerCase();
       const c1Done = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
       const c2Done = JSON.parse(localStorage.getItem("pyblocks_c2_done") || "[]");
-      const c1Open = c1Done.length >= 48, c2Open = c2Done.length >= 24;
+      const c3Done = JSON.parse(localStorage.getItem("pyblocks_c3_done") || "[]");
+      const c1Open = c1Done.length >= 48, c2Open = c2Done.length >= 24, c3Open = c3Done.length >= 24;
       menu.innerHTML = "";
 
       const addHeader = (title, tag) => {
@@ -229,7 +303,7 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
         if (q && !lbl.toLowerCase().includes(q) && !code.toLowerCase().includes(q)) return;
         const d = document.createElement("div");
         d.className = "blk";
-        const tag = tier === "c1" ? "Course 1" : (tier === "c2" ? "Course 2" : "");
+        const tag = tier === "c1" ? "Course 1" : (tier === "c2" ? "Course 2" : (tier === "c3" ? "Course 3" : ""));
         const badge = tag ? '<span class="c-badge">' + tag + '</span>' : "";
         const preview = code.split("\n").at(0).replace(/</g, "&lt;");
         d.innerHTML = badge + "<strong>" + lbl + "</strong><small>" + preview + "</small>";
@@ -247,8 +321,11 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       addHeader("🐢 Course 2 Blueprints", c2Open ? "Unlocked" : c2Done.length + "/24");
       if (c2Open || q) blocks.filter(b => b.at(3) === "c2").forEach(addBlock);
       else menu.insertAdjacentHTML("beforeend", '<div class="lock-card">🔒 Beat <b>Course 2</b> (' + c2Done.length + '/24) to unlock Polygons, Fills & Spirals!</div>');
-    }
 
+      addHeader("🕵️ Course 3 Blueprints", c3Open ? "Unlocked" : c3Done.length + "/24");
+      if (c3Open || q) blocks.filter(b => b.at(3) === "c3").forEach(addBlock);
+      else menu.insertAdjacentHTML("beforeend", '<div class="lock-card">🔒 Beat <b>Course 3</b> (' + c3Done.length + '/24) to unlock RPG Loops, Ciphers & Try/Except!</div>');
+    }
     function insertBlock(code, info) {
       tip.textContent = info;
       const html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/___/g, '<span class="hole" contenteditable="true"></span>').replace(/\n/g, "<br>");
@@ -260,22 +337,35 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
     }
 
     function toggleSide() { document.getElementById("sidePanel").classList.toggle("hide"); }
-    function changeFont(d) { fontSize = Math.min(28, Math.max(11, fontSize + d)); ed.style.fontSize = gutter.style.fontSize = fontSize + "px"; localStorage.setItem("pyblocks_font", fontSize); }
+    function changeFont(d) {
+      fontSize = Math.min(28, Math.max(11, fontSize + d));
+      ed.style.fontSize = hl.style.fontSize = gutter.style.fontSize = fontSize + "px";
+      localStorage.setItem("pyblocks_font", fontSize);
+    }
+
     function syncEditor() {
-      const lines = ed.innerText.replace(/\u00a0/g, " ").split("\n").length;
+      const raw = ed.innerText.replace(/\u00a0/g, " ");
+      const lines = raw.split("\n").length;
       let nums = "";
       for (let i = 1; i <= Math.max(1, lines); i++) nums += i + "\n";
       gutter.textContent = nums.trimEnd();
-      localStorage.setItem("pyblocks_code", ed.innerHTML);
+      hl.innerHTML = highlightPy(raw) + "\n";
+      files[curTab].code = raw;
+      localStorage.setItem("pyblocks_files_v9", JSON.stringify(files));
     }
-    ed.addEventListener("scroll", () => { gutter.scrollTop = ed.scrollTop; });
+
+    ed.addEventListener("scroll", () => {
+      gutter.scrollTop = ed.scrollTop;
+      hl.scrollTop = ed.scrollTop;
+      hl.scrollLeft = ed.scrollLeft;
+    });
     ed.addEventListener("input", syncEditor);
 
     function loadEx(i) { if (examples[i]) { ed.textContent = examples[i]; tip.textContent = "Loaded Example!"; syncEditor(); } }
     function openFile(e) { const f = e.target.files.item(0); if (!f) return; const r = new FileReader(); r.onload = ev => { ed.textContent = ev.target.result; syncEditor(); }; r.readAsText(f); }
-    function saveCode() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ed.innerText.replace(/\u00a0/g, " ")], { type: "text/plain" })); a.download = "main.py"; a.click(); }
+    function saveCode() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ed.innerText.replace(/\u00a0/g, " ")], { type: "text/plain" })); a.download = files[curTab].name; a.click(); }
     function savePng() { const c = tbox.querySelector("canvas"); if (!c) return; const a = document.createElement("a"); a.download = "pyblocks_art.png"; a.href = c.toDataURL("image/png"); a.click(); }
-    function clearAll() { ed.innerHTML = ""; out.textContent = ""; tbox.innerHTML = ""; tbox.style.display = "none"; pngBtn.style.display = "none"; localStorage.removeItem("pyblocks_code"); syncEditor(); }
+    function clearAll() { ed.innerHTML = ""; out.textContent = ""; tbox.innerHTML = ""; tbox.style.display = "none"; pngBtn.style.display = "none"; syncEditor(); }
 
     const pairs = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
     const closers = new Set([")", "]", "}", '"', "'"]);
@@ -368,6 +458,9 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       if (ed.querySelector(".hole:empty")) { out.textContent = "Tip: Fill in all white boxes first!"; return; }
 
       const cleanCode = ed.innerText.replace(/\u00a0/g, " ");
+      if (/\btry\s*:/.test(cleanCode) && /\bexcept\b/.test(cleanCode)) unlockAch("tryCatch");
+      if (/\.isupper\(\)/.test(cleanCode) || /\.islower\(\)/.test(cleanCode)) unlockAch("spyCipher");
+
       const usesTurtle = /\bturtle\b/.test(cleanCode);
       stopFlag = false; setRunning(true); out.textContent = ""; tbox.innerHTML = "";
       tbox.style.display = usesTurtle ? "block" : "none";
@@ -424,10 +517,8 @@ print(f"Hello {name.capitalize()}! Your lucky number is: {lucky}")</div>
       syncPickers();
       const savedFont = localStorage.getItem("pyblocks_font");
       if (savedFont !== null) changeFont(parseInt(savedFont, 10) - 16);
-      const savedCode = localStorage.getItem("pyblocks_code");
-      if (savedCode !== null) ed.innerHTML = savedCode;
       renderMenu();
-      syncEditor();
+      loadTab(curTab);
     };
   </script>
 </body>

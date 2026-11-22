@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PyBlocks V8</title>
+  <title>PyBlocks Studio V9</title>
   <style>
     :root {
       --bg: #1e1e2e; --panel: #181825; --bar: #24273a;
@@ -31,7 +31,7 @@
     .card:hover { border-color: var(--accent); }
     .card h2 { font-size: 1.35rem; color: var(--accent); margin-bottom: 8px; }
     .card p { color: var(--muted); font-size: 0.9rem; line-height: 1.45; margin-bottom: 16px; }
-    .badge { display: inline-block; background: var(--bar); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; color: var(--btn-green); margin-top: 6px; }
+    .badge { display: inline-block; background: var(--bar); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; color: var(--btn-green); margin-top: 6px; margin-right: 4px; }
     .pbar { width: 100%; height: 7px; background: var(--bar); border-radius: 999px; overflow: hidden; margin-top: 8px; }
     .pfill { height: 100%; background: var(--btn-green); width: 0%; transition: width 0.3s; }
     .ach-drawer { display: none; width: 100%; max-width: 760px; background: var(--panel); border: 2px solid var(--border); border-radius: 14px; padding: 18px; margin-top: 18px; text-align: left; }
@@ -45,24 +45,25 @@
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span class="xp-pill" id="xpBadge">⚡ 0 XP • Novice Scripter</span>
-      <button class="btn-dark" id="achBtn" onclick="toggleAch()">🏆 Trophies (0/8)</button>
+      <button class="btn-dark" id="achBtn" onclick="toggleAch()">🏆 Trophies (0/12)</button>
     </div>
     <button class="btn-dark" id="themeBtn" onclick="cycleTheme()">Theme: Blue</button>
   </div>
 
   <main class="hero">
-    <h1 class="logo">PyBlocks <span style="font-size:0.35em;color:var(--muted);font-weight:700;letter-spacing:0">V8</span></h1>
-    <p class="sub">Offline Python 3 coding studio, interactive courses, and turtle graphics playground.</p>
+    <h1 class="logo">PyBlocks <span style="font-size:0.35em;color:var(--muted);font-weight:700;letter-spacing:0">V9</span></h1>
+    <p class="sub">Offline Python 3 IDE, multi-file workspace, interactive courses, and turtle graphics playground.</p>
 
     <div class="cards">
       <a href="courses.html" class="card">
         <div>
           <h2>🎓 Courses</h2>
-          <p>Master Python Fundamentals & Turtle Geometry to earn XP and unlock new Studio blueprints.</p>
+          <p>Master Python, Turtle Art, Mini-Games & Spy Ciphers to earn XP and unlock Studio blueprints.</p>
         </div>
         <div>
-          <span class="badge" id="c1Badge">Course 1: 0 / 48</span>
-          <span class="badge" id="c2Badge">Course 2: 0 / 24</span>
+          <span class="badge" id="c1Badge">C1: 0/48</span>
+          <span class="badge" id="c2Badge">C2: 0/24</span>
+          <span class="badge" id="c3Badge">C3: 0/24</span>
           <div class="pbar"><div class="pfill" id="progFill"></div></div>
         </div>
       </a>
@@ -70,7 +71,7 @@
       <a href="studio.html" class="card">
         <div>
           <h2>⚡ Studio</h2>
-          <p>Free-build Python editor with clickable blueprints, turtle PNG export, Smart Error Translator, and Variable X-Ray.</p>
+          <p>Multi-file Python IDE with live syntax highlighting, blueprints, turtle PNG export, and Variable X-Ray.</p>
         </div>
         <div>
           <span class="badge" id="unlockBadge">⚡ Starter Blueprints Ready</span>
@@ -114,32 +115,38 @@
 
       const c1 = JSON.parse(localStorage.getItem("pyblocks_done_v4") || "[]");
       const c2 = JSON.parse(localStorage.getItem("pyblocks_c2_done") || "[]");
+      const c3 = JSON.parse(localStorage.getItem("pyblocks_c3_done") || "[]");
       const flags = JSON.parse(localStorage.getItem("pyblocks_ach") || "{}");
 
       let xp = 0;
-      c1.forEach(i => xp += (i % 8 === 7 ? 100 : 25));
-      c2.forEach(i => xp += (i % 8 === 7 ? 100 : 25));
-      const rank = xp >= 2000 ? "Grand Architect" : xp >= 1200 ? "Turtle Master" : xp >= 500 ? "Loop Apprentice" : xp >= 100 ? "Code Explorer" : "Novice Scripter";
+      [c1, c2, c3].forEach(arr => arr.forEach(i => xp += (i % 8 === 7 ? 100 : 25)));
+      const rank = xp >= 2800 ? "Cyber Legend" : xp >= 2000 ? "Grand Architect" : xp >= 1200 ? "Turtle Master" : xp >= 500 ? "Loop Apprentice" : xp >= 100 ? "Code Explorer" : "Novice Scripter";
 
       document.getElementById("xpBadge").textContent = `⚡ ${xp} XP • ${rank}`;
-      document.getElementById("c1Badge").textContent = `Course 1: ${c1.length} / 48`;
-      document.getElementById("c2Badge").textContent = `Course 2: ${c2.length} / 24`;
-      document.getElementById("progFill").style.width = Math.round(((c1.length + c2.length) / 72) * 100) + "%";
+      document.getElementById("c1Badge").textContent = `C1: ${c1.length}/48`;
+      document.getElementById("c2Badge").textContent = `C2: ${c2.length}/24`;
+      document.getElementById("c3Badge").textContent = `C3: ${c3.length}/24`;
+      document.getElementById("progFill").style.width = Math.round(((c1.length + c2.length + c3.length) / 96) * 100) + "%";
 
-      const unlockedPacks = ["Starter"];
-      if (c1.length >= 48) unlockedPacks.push("Course 1");
-      if (c2.length >= 24) unlockedPacks.push("Course 2");
-      document.getElementById("unlockBadge").textContent = "⚡ " + unlockedPacks.join(" + ") + " Blueprints";
+      const packs = ["Starter"];
+      if (c1.length >= 48) packs.push("C1");
+      if (c2.length >= 24) packs.push("C2");
+      if (c3.length >= 24) packs.push("C3");
+      document.getElementById("unlockBadge").textContent = "⚡ " + packs.join(" + ") + " Blueprints";
 
       const trophies = [
-        ["First Steps", "Complete your first course stage.", c1.length + c2.length >= 1, false],
-        ["Boss Slayer", "Beat any No-Hint Boss Test.", c1.some(i => i % 8 === 7) || c2.some(i => i % 8 === 7), false],
+        ["First Steps", "Complete your first course stage.", c1.length + c2.length + c3.length >= 1, false],
+        ["Boss Slayer", "Beat any No-Hint Boss Test.", [c1, c2, c3].some(a => a.some(i => i % 8 === 7)), false],
         ["Course 1 Graduate", "Complete all 48 Python Fundamentals stages.", c1.length >= 48, false],
-        ["Turtle Master", "Complete all 24 Turtle Art & Geometry stages.", c2.length >= 24, false],
+        ["Turtle Master", "Complete all 24 Turtle Art stages.", c2.length >= 24, false],
+        ["Game & Cipher Dev", "Complete all 24 Course 3 stages.", c3.length >= 24, false],
         ["Theme Artist", "Create a custom color scheme with 🎨.", Object.keys(custom).length > 0 || !!flags.customTheme, false],
+        ["Multi-File Coder", "Switch or create project tabs in Studio.", !!flags.usedTabs, false],
         ["X-Ray Vision", "Inspect variables with 🔍 X-Ray.", !!flags.xray, true],
-        ["Emergency Brake", "Stop a running script with the Stop button.", !!flags.stopped, true],
-        ["Math Rebel", "Trigger a ZeroDivisionError in Studio.", !!flags.zeroDiv, true]
+        ["Emergency Brake", "Stop a running script with Stop.", !!flags.stopped, true],
+        ["Math Rebel", "Trigger a ZeroDivisionError in Studio.", !!flags.zeroDiv, true],
+        ["Error Shield", "Catch an error using try / except.", !!flags.tryCatch, true],
+        ["Spy Cryptographer", "Run uppercase/lowercase cipher logic.", !!flags.spyCipher, true]
       ];
 
       let gotCount = 0;
