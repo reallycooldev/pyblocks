@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PyBlocks Studio V2.0 — Free-Build IDE</title>
+<script src="skulpt.min.js"></script>
+<script src="skulpt-stdlib.js"></script>
+<style>
+:root{--bg:#181825;--panel:#1e1e2e;--card:#252538;--border:#313244;--accent:#8aadf4;--accent2:#a6da95;--text:#cad3f5;--muted:#8087a2}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;padding:12px 12px 44px;display:flex;flex-direction:column;align-items:center}
+#toast{position:fixed;top:-90px;left:50%;transform:translateX(-50%);background:var(--panel);border:2px solid var(--accent);color:var(--text);padding:12px 20px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;gap:12px;transition:top .42s cubic-bezier(.22,1,.36,1);max-width:92vw}
+#toast.show{top:16px}
+.wrap{width:100%;max-width:980px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:14px}
+.top a,.btn,select{background:var(--card);color:var(--text);border:1px solid var(--border);padding:7px 11px;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:700;cursor:pointer}
+.btn.pri{background:var(--accent);color:#11111b;border:none}
+.btn.ok{background:var(--accent2);color:#11111b;border:none}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ftab{background:var(--panel);border:1px solid var(--border);color:var(--muted);padding:6px 11px;border-radius:9px;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.ftab.active{border-color:var(--accent);color:var(--accent);background:var(--card)}
+.main-grid{display:grid;grid-template-columns:1fr 280px;gap:12px}
+@media(max-width:780px){.main-grid{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:9px}
+.qbar{display:flex;flex-wrap:wrap;gap:5px}
+.qbar button{background:var(--card);border:1px solid var(--border);color:var(--accent);padding:5px 9px;border-radius:7px;font-family:monospace;font-size:.8rem;font-weight:700;cursor:pointer}
+.ed-shell{display:grid;grid-template-columns:38px 1fr;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;min-height:260px}
+#lines{background:var(--card);color:var(--muted);padding:12px 6px;font-family:monospace;font-size:.86rem;line-height:1.5;text-align:right;user-select:none}
+.ed-wrap{position:relative;min-height:260px}
+#hl,#hl span,#code{font-family:monospace!important;font-size:14px!important;line-height:21px!important;font-weight:400!important;letter-spacing:0!important}
+#hl,#code{margin:0;padding:12px;tab-size:4;white-space:pre-wrap;word-wrap:break-word;width:100%;min-height:260px}
+#hl{position:absolute;inset:0;pointer-events:none;color:var(--text)}
+#code{position:relative;background:transparent;color:transparent;caret-color:var(--accent);border:none;outline:none;resize:vertical}
+.kw{color:#bd93f9}.fn{color:#569cd6}.str{color:#f1fa8c}.num{color:#f5a97f}.com{color:#6272a4}
+.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:580px){.out-grid{grid-template-columns:1fr}}
+pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:150px;font-family:monospace;font-size:.82rem;white-space:pre-wrap;overflow-x:auto}
+#tcanvas{background:#11111b;border:1px solid var(--border);border-radius:10px;min-height:150px;display:flex;align-items:center;justify-content:center}
+.bp-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
+.bp-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:9px;text-align:left;font-size:.79rem;cursor:pointer}
+.bp-btn:hover{border-color:var(--accent)}
+.bp-tag{font-size:.66rem;text-transform:uppercase;color:var(--accent2);font-weight:800}
+.xray{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:8px;font-family:monospace;font-size:.78rem;color:var(--accent2);min-height:64px;white-space:pre-wrap}
+.cblock{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--border);padding-top:8px}
+.cblock input,.cblock textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:8px;font-size:.78rem;font-family:monospace}
+</style>
+</head>
+<body>
+<div id="toast"><div style="font-size:1.6rem" id="tIcon">🏆</div><div><div style="font-size:.72rem;text-transform:uppercase;color:var(--accent);font-weight:800" id="tSub">Studio Notice</div><div style="font-size:.96rem;font-weight:700" id="tName">Ready</div></div></div>
+<div class="wrap">
+  <div class="top">
+    <a href="index.html">⬅ Menu</a>
+    <b style="color:var(--accent)">⚡ Free-Build Studio (V2.0)</b>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <select id="demoSel" onchange="loadDemo(this.value)">
+        <option value="">✨ Load Demo Template...</option>
+        <option value="mandala">🐢 Rainbow Mandala</option>
+        <option value="rpg">⚔️ RPG Boss Simulator</option>
+        <option value="cipher">🕵️ Spy Morse &amp; Caesar</option>
+        <option value="dungeon">🏰 Text Adventure Room</option>
+        <option value="arcade">👾 Arcade High-Score Board</option>
+      </select>
+      <button class="btn" onclick="downloadPy()">💾 .py</button>
+      <button class="btn" onclick="savePng()">🖼️ PNG</button>
+      <a href="courses.html">Courses 🎓</a>
+    </div>
+  </div>
+
+  <div class="tabs" id="fileTabs"></div>
+
+  <div class="main-grid">
+    <div class="box">
+      <div class="qbar" id="qbar"></div>
+      <div class="ed-shell">
+        <div id="lines">1</div>
+        <div class="ed-wrap">
+          <pre id="hl" aria-hidden="true"></pre>
+          <textarea id="code" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn pri" onclick="runStudio()">▶ Run Code</button>
+        <button class="btn" onclick="clearOut()">🧹 Clear Output</button>
+        <button class="btn" onclick="clearIn()">🗑️ Clear Input</button>
+        <button class="btn" onclick="clearAll()">💥 Clear All</button>
+        <span id="errHelp" style="font-size:.78rem;color:#f38ba8;font-weight:600"></span>
+      </div>
+      <div class="out-grid">
+        <pre class="term" id="out">Ready to run Python 3...</pre>
+        <div id="tcanvas"></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <b style="font-size:.88rem;color:var(--accent)">🧩 Blueprints (<span id="bpCnt">0</span> Unlocked)</b>
+      <div style="font-size:.73rem;color:var(--muted)">Core blocks + Section Boss rewards (1.8, 2.8, 3.8...) + your Custom Blocks!</div>
+      <div class="bp-list" id="bpList"></div>
+      <div class="cblock">
+        <b style="font-size:.8rem;color:var(--accent)">➕ Create Custom Block</b>
+        <input id="cbName" placeholder="Block title (e.g. Crit Hit)">
+        <textarea id="cbCode" rows="2" placeholder='print("CRITICAL HIT!")'></textarea>
+        <button class="btn ok" onclick="addCustomBlock()">Save Block</button>
+      </div>
+      <b style="font-size:.85rem;color:var(--accent);margin-top:2px">🔬 Variable X-Ray</b>
+      <div class="xray" id="xray">Run code to inspect variables...</div>
+    </div>
+  </div>
+</div>
+<script>
+let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"customBps":[],"theme":"macchiato","custom":null}');
+if(!state.bps)state.bps=[];
+if(!state.customBps)state.customBps=[];
+let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio V2.0\\nprint(\\"Hello Studio!\\")\\n"}]');
+let activeIdx=0;
+
+const DEMOS={
+  mandala:'# Rainbow Mandala Demo\nimport turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["cyan", "magenta", "yellow", "lime", "orange"]\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.forward(i * 3)\n    t.right(91)\nprint("Mandala Complete!")\n',
+  rpg:'# RPG Boss Simulator\nimport random\nboss_hp = 100\nfor turn in range(1, 5):\n    dmg = random.randint(20, 35)\n    boss_hp = max(0, boss_hp - dmg)\n    print(f"Turn {turn}: Dealt {dmg} dmg -> Boss HP: {boss_hp}")\n    if boss_hp == 0:\n        print("VICTORY!")\n        break\n',
+  cipher:'# Spy Morse & Caesar Cipher\nmorse = {"H":"....","I":"..","P":"--.","Y":"-.--"}\nword = "HIPY"\nencoded = " ".join(morse[ch] for ch in word)\nprint("Original:", word)\nprint("Morse:", encoded)\n',
+  dungeon:'# Text Adventure Room Navigator\nrooms = {"Gate":{"north":"Hall"},"Hall":{"south":"Gate","east":"Vault"},"Vault":{"west":"Hall"}}\npos = "Gate"\nbag = ["Torch", "Rusty Key"]\nfor step in ["north", "east"]:\n    pos = rooms[pos][step]\n    print("Moved", step, "->", pos)\nif "Rusty Key" in bag:\n    print("Vault Unlocked!")\n',
+  arcade:'# Arcade High-Score Leaderboard\nscores = [450, 1280, 920, 1540, 760]\nscores.sort(reverse=True)\nprint("=== TOP SCORES ===")\nfor rank, s in enumerate(scores, 1):\n    print(f"#{rank}: {s} pts")\n'
+};
+
+const CORE_BLOCKS=[
+  {tag:"Core",name:"Print Message",code:'print("Hello PyBlocks!")'},
+  {tag:"Core",name:"If / Else Check",code:'score = 85\nif score >= 80:\n    print("Rank S!")\nelse:\n    print("Try again")'},
+  {tag:"Core",name:"For Loop (1..5)",code:'for i in range(1, 6):\n    print("Step", i)'},
+  {tag:"Core",name:"Function Def",code:'def combo(dmg, mult=2):\n    return dmg * mult\nprint(combo(25))'},
+  {tag:"Core",name:"Dictionary Table",code:'stats = {"HP": 100, "ATK": 35}\nprint("ATK:", stats["ATK"])'},
+  {tag:"Core",name:"Random Dice",code:'import random\nprint("Roll:", random.randint(1, 20))'},
+  {tag:"Core",name:"Turtle Square",code:'import turtle\nt = turtle.Turtle()\nt.color("cyan")\nfor i in range(4):\n    t.forward(70)\n    t.right(90)'},
+  {tag:"Core",name:"Try / Except Safe",code:'try:\n    print(10 / 2)\nexcept:\n    print("Safe fallback!")'}
+];
+
+function saveAll(){
+  localStorage.setItem("pbs_v2",JSON.stringify(state));
+  localStorage.setItem("pbs_v2_files",JSON.stringify(files));
+}
+function applyTheme(){
+  const THEMES={macchiato:{bg:"#181825",panel:"#1e1e2e",card:"#252538",accent:"#8aadf4",accent2:"#a6da95",text:"#cad3f5"},crimson:{bg:"#1a0d10",panel:"#261217",card:"#33181f",accent:"#f38ba8",accent2:"#fab387",text:"#fce8ec"},emerald:{bg:"#0c1a14",panel:"#12261d",card:"#183327",accent:"#40c080",accent2:"#a6e3a1",text:"#e2f5ec"},amber:{bg:"#1c150c",panel:"#291f12",card:"#362918",accent:"#f5a97f",accent2:"#eed49f",text:"#fbf0e4"},cyber:{bg:"#0d0c1d",panel:"#161430",card:"#1f1c42",accent:"#c6a0f6",accent2:"#7dc4e4",text:"#eae6ff"},ocean:{bg:"#0b1622",panel:"#112233",card:"#172e45",accent:"#38bdf8",accent2:"#34d399",text:"#e0f2fe"},mono:{bg:"#111111",panel:"#1b1b1b",card:"#262626",accent:"#ffffff",accent2:"#a3a3a3",text:"#f5f5f5"},sunset:{bg:"#1d101c",panel:"#2b172a",card:"#3b2039",accent:"#ff7b72",accent2:"#ffa657",text:"#ffeff7"}};
+  const t=state.custom||THEMES[state.theme]||THEMES.macchiato;
+  const r=document.documentElement.style;
+  r.setProperty("--bg",t.bg);r.setProperty("--panel",t.panel);r.setProperty("--card",t.card);
+  r.setProperty("--accent",t.accent);r.setProperty("--accent2",t.accent2);r.setProperty("--text",t.text);
+}
+function showToast(icon,name,sub="Studio Notice"){
+  document.getElementById("tIcon").textContent=icon;
+  document.getElementById("tSub").textContent=sub;
+  document.getElementById("tName").textContent=name;
+  const el=document.getElementById("toast");el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),3400);
+}
+function unlockTrophy(id,label){
+  if(!state.trophies.includes(id)){
+    state.trophies.push(id);saveAll();showToast("🏆",label,"Achievement Unlocked!");
+  }
+}
+
+function renderBPs(){
+  const list=document.getElementById("bpList");list.innerHTML="";
+  document.getElementById("bpCnt").textContent=state.bps.length;
+  const unlocked=state.bps.map(b=>({tag:"Boss Reward",name:b.name,code:b.code}));
+  const custom=state.customBps.map(b=>({tag:"Custom",name:b.name,code:b.code}));
+  [...unlocked,...custom,...CORE_BLOCKS].forEach(bp=>{
+    const b=document.createElement("button");b.className="bp-btn";
+    b.innerHTML=`<div class="bp-tag">${bp.tag}</div><b>➕ ${bp.name}</b>`;
+    b.onclick=()=>{
+      const ta=document.getElementById("code");
+      ta.value+=(ta.value.endsWith("\n")||ta.value===""?"":"\n")+bp.code+"\n";
+      syncHL();showToast("🧩","Inserted: "+bp.name);
+    };
+    list.appendChild(b);
+  });
+}
+function addCustomBlock(){
+  const n=document.getElementById("cbName").value.trim();
+  const c=document.getElementById("cbCode").value.trim();
+  if(!n||!c){showToast("⚠️","Enter block title & code");return;}
+  state.customBps.push({name:n,code:c});saveAll();
+  document.getElementById("cbName").value="";document.getElementById("cbCode").value="";
+  renderBPs();showToast("✨","Saved Custom Block!");
+}
+function loadDemo(k){
+  if(!k||!DEMOS[k])return;
+  files.push({name:k+"_demo.py",code:DEMOS[k]});
+  activeIdx=files.length-1;saveAll();
+  if(files.length>=3)unlockTrophy("multi_file","Project Manager");
+  renderTabs();loadFile();document.getElementById("demoSel").value="";
+  showToast("✨","Loaded Demo: "+k);
+}
+const SYMS=[["Tab","    "],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
+function buildQbar(){
+  const qb=document.getElementById("qbar");qb.innerHTML="";
+  SYMS.forEach(([lbl,ins])=>{
+    const b=document.createElement("button");b.textContent=lbl;
+    b.onclick=()=>{
+      const ta=document.getElementById("code"),s=ta.selectionStart,e=ta.selectionEnd;
+      ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
+      const pos=ins.length===2&&ins!=="  "?s+1:s+ins.length;
+      ta.focus();ta.setSelectionRange(pos,pos);syncHL();
+    };
+    qb.appendChild(b);
+  });
+}
+
+function syncHL(){
+  const ta=document.getElementById("code");
+  files[activeIdx].code=ta.value;saveAll();
+  const count=ta.value.split("\n").length;
+  document.getElementById("lines").innerHTML=Array.from({length:count},(_,i)=>i+1).join("<br>");
+  const esc=ta.value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const rx=/(#.*)|(".*?"|'.*?')|\b(def|return|if|elif|else|for|while|in|import|from|try|except|break|continue|True|False|None|and|or|not)\b|\b(print|input|range|len|str|int|float|list|dict|set|tuple|round|sum|sorted|type|min|max|abs|chr|ord|enumerate)\b|(?<![a-zA-Z0-9_])(\d+(?:\.\d+)?)\b/g;
+  document.getElementById("hl").innerHTML=esc.replace(rx,(m,com,str,kw,fn,num)=>{
+    if(com)return`<span class="com">${com}</span>`;
+    if(str)return`<span class="str">${str}</span>`;
+    if(kw)return`<span class="kw">${kw}</span>`;
+    if(fn)return`<span class="fn">${fn}</span>`;
+    return`<span class="num">${num}</span>`;
+  })+"\n";
+}
+document.getElementById("code").addEventListener("input",syncHL);
+
+function renderTabs(){
+  const box=document.getElementById("fileTabs");box.innerHTML="";
+  files.forEach((f,i)=>{
+    const b=document.createElement("button");
+    b.className="ftab"+(i===activeIdx?" active":"");
+    b.innerHTML=`<span>📄 ${f.name}</span>`+(files.length>1?`<span onclick="delFile(event,${i})" style="color:#f38ba8">✕</span>`:"");
+    b.onclick=()=>{activeIdx=i;loadFile();};
+    box.appendChild(b);
+  });
+  const add=document.createElement("button");add.className="btn";add.textContent="+ New File";
+  add.onclick=()=>{
+    const n=prompt("File name (e.g. game.py):","script"+(files.length+1)+".py");
+    if(n){files.push({name:n.trim(),code:"# "+n.trim()+"\n"});activeIdx=files.length-1;saveAll();if(files.length>=3)unlockTrophy("multi_file","Project Manager");renderTabs();loadFile();}
+  };
+  box.appendChild(add);
+}
+function delFile(e,i){
+  e.stopPropagation();files.splice(i,1);activeIdx=Math.max(0,activeIdx-1);saveAll();renderTabs();loadFile();
+}
+function loadFile(){
+  document.getElementById("code").value=files[activeIdx].code;syncHL();
+}
+
+function translateErr(msg){
+  if(msg.includes("SyntaxError"))return"💡 Tip: Check for missing quotes \" \", colons :, or matching brackets ( ).";
+  if(msg.includes("IndentationError"))return"💡 Tip: Use 4 spaces (tap Tab) after if, for, while, or def lines.";
+  if(msg.includes("NameError"))return"💡 Tip: Variable name spelled wrong or missing quotes around a word!";
+  if(msg.includes("TypeError"))return"💡 Tip: Can't mix text and numbers directly—wrap numbers in str().";
+  return"💡 Check the line number in the error message above.";
+}
+
+function runStudio(){
+  const src=document.getElementById("code").value;
+  const outEl=document.getElementById("out");
+  const errEl=document.getElementById("errHelp");
+  let buf="";outEl.textContent="";errEl.textContent="";
+  document.getElementById("tcanvas").innerHTML="";
+  Sk.configure({
+    output:t=>{buf+=t;outEl.textContent=buf;},
+    read:x=>{if(Sk.builtinFiles===undefined||Sk.builtinFiles["files"][x]===undefined)throw"File not found: "+x;return Sk.builtinFiles["files"][x];}
+  });
+  (Sk.TurtleGraphics||(Sk.TurtleGraphics={})).target="tcanvas";
+  Sk.misceval.asyncToPromise(()=>Sk.importMainWithBody("<stdin>",false,src,true))
+    .then(()=>{
+      unlockTrophy("studio_run","Sandbox Builder");
+      if(buf.split(/\s+/).includes("42"))unlockTrophy("sec_42","Meaning of Life");
+      const vars=[];
+      src.split("\n").forEach(ln=>{
+        const m=ln.match(/^\s*([a-zA-Z_]\w*)\s*=\s*([^=].*)$/);
+        if(m)vars.push(`${m[1]} = ${m[2].trim()}`);
+      });
+      document.getElementById("xray").textContent=vars.length?vars.join("\n"):"No top-level variables assigned.";
+    })
+    .catch(err=>{
+      const s=err.toString();
+      outEl.textContent=buf+"\n❌ "+s;
+      errEl.textContent=translateErr(s);
+    });
+}
+function clearOut(){document.getElementById("out").textContent="Output cleared.";document.getElementById("tcanvas").innerHTML="";document.getElementById("errHelp").textContent="";}
+function clearIn(){if(!document.getElementById("code").value||confirm("Clear all code in this file?")){document.getElementById("code").value="";syncHL();showToast("🗑️","Input cleared");}}
+function clearAll(){if(!document.getElementById("code").value||confirm("Clear both code input and output?")){document.getElementById("code").value="";syncHL();clearOut();showToast("💥","Input & output cleared");}}
+function downloadPy(){
+  const f=files[activeIdx];
+  const blob=new Blob([f.code],{type:"text/plain"});
+  const a=document.createElement("a");a.download=f.name;a.href=URL.createObjectURL(blob);a.click();
+  showToast("💾","Downloaded "+f.name);
+}
+function savePng(){
+  const c=document.querySelector("#tcanvas canvas");
+  if(!c){showToast("⚠️","Draw with turtle first!");return;}
+  const a=document.createElement("a");a.download="pyblocks_v2_art.png";a.href=c.toDataURL();a.click();
+  showToast("🖼️","Turtle Art Saved!");
+}
+
+applyTheme();buildQbar();renderTabs();loadFile();renderBPs();
+print
+</script>
+</body>
+</html>

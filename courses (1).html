@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PyBlocks Studio 2.0 — Courses Academy</title>
+<script src="skulpt.min.js"></script>
+<script src="skulpt-stdlib.js"></script>
+<style>
+:root{--bg:#181825;--panel:#1e1e2e;--card:#252538;--border:#313244;--accent:#8aadf4;--accent2:#a6da95;--text:#cad3f5;--muted:#8087a2}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;padding:12px 12px 40px;display:flex;flex-direction:column;align-items:center}
+#toast{position:fixed;top:-90px;left:50%;transform:translateX(-50%);background:var(--panel);border:2px solid var(--accent);color:var(--text);padding:12px 20px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;gap:12px;transition:top .42s cubic-bezier(.22,1,.36,1);max-width:92vw}
+#toast.show{top:16px}
+.wrap{width:100%;max-width:860px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:14px}
+.top a,.btn{background:var(--card);color:var(--text);border:1px solid var(--border);padding:7px 12px;border-radius:10px;text-decoration:none;font-size:.82rem;font-weight:700;cursor:pointer}
+.btn.pri{background:var(--accent);color:#11111b;border:none}
+.btn.ok{background:var(--accent2);color:#11111b;border:none}
+.c-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:600px){.c-tabs{grid-template-columns:repeat(2,1fr)}}
+.ctab{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;text-align:left;cursor:pointer}
+.ctab.active{border-color:var(--accent);background:var(--card)}
+.ctab b{display:block;font-size:.85rem;color:var(--accent)}
+.ctab span{font-size:.74rem;color:var(--muted)}
+.grid{display:grid;grid-template-columns:250px 1fr;gap:12px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.list{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:10px;max-height:460px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.sec-lbl{font-size:.73rem;font-weight:800;color:var(--accent);text-transform:uppercase;margin-top:6px;display:flex;justify-content:space-between}
+.st-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:9px;text-align:left;font-size:.8rem;cursor:pointer;display:flex;justify-content:space-between}
+.st-btn.active{border-color:var(--accent)}
+.st-btn.done{border-color:var(--accent2)}
+.work{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.goal{background:var(--card);border-left:3px solid var(--accent);padding:10px 12px;border-radius:8px;font-size:.86rem;line-height:1.45}
+.qbar{display:flex;flex-wrap:wrap;gap:5px}
+.qbar button{background:var(--card);border:1px solid var(--border);color:var(--accent);padding:5px 9px;border-radius:7px;font-family:monospace;font-size:.8rem;font-weight:700;cursor:pointer}
+textarea{width:100%;min-height:150px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:monospace;font-size:.9rem;line-height:1.45;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.out-box{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.out-box{grid-template-columns:1fr}}
+pre{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:110px;font-family:monospace;font-size:.83rem;white-space:pre-wrap;overflow-x:auto}
+#tcanvas{background:#11111b;border:1px solid var(--border);border-radius:10px;min-height:110px;display:flex;align-items:center;justify-content:center}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:14px;z-index:9000}
+.modal-bg.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--accent);border-radius:16px;width:100%;max-width:560px;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:90vh;overflow-y:auto}
+.fn-pills{display:flex;flex-wrap:wrap;gap:6px}
+.fn-pills button{background:var(--card);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:8px;font-family:monospace;font-size:.8rem;cursor:pointer}
+.fn-pills button.active{border-color:var(--accent);color:var(--accent)}
+.rule-box{background:var(--card);padding:10px;border-radius:10px;font-size:.82rem;line-height:1.45}
+</style>
+</head>
+<body>
+<div id="toast"><div style="font-size:1.6rem" id="tIcon">🏆</div><div><div style="font-size:.72rem;text-transform:uppercase;color:var(--accent);font-weight:800" id="tSub">Achievement Unlocked!</div><div style="font-size:.96rem;font-weight:700" id="tName">Trophy</div></div></div>
+<div class="wrap">
+  <div class="top">
+    <a href="index.html">⬅ Menu</a>
+    <b style="color:var(--accent)">🎓 Quad-Course Academy (V2.0)</b>
+    <div class="row">
+      <button class="btn" onclick="openExplain()">📖 Explain Function</button>
+      <a href="studio.html">Studio ⚡</a>
+    </div>
+  </div>
+  <div class="c-tabs" id="cTabs"></div>
+  <div class="grid">
+    <div class="list" id="stageList"></div>
+    <div class="work">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h3 id="stTitle" style="color:var(--accent)">Stage</h3>
+        <span id="stReward" style="font-size:.76rem;color:var(--accent2);font-weight:700"></span>
+      </div>
+      <div class="goal" id="stGoal"></div>
+      <div class="qbar" id="qbar"></div>
+      <textarea id="code" spellcheck="false"></textarea>
+      <div class="row">
+        <button class="btn pri" onclick="runStage()">▶ Run &amp; Check</button>
+        <button class="btn" onclick="useHint()">💡 Hint</button>
+        <button class="btn" onclick="resetCode()">↺ Reset</button>
+        <span id="hintTxt" style="font-size:.8rem;color:var(--muted)"></span>
+      </div>
+      <div class="out-box">
+        <pre id="out">Output appears here...</pre>
+        <div id="tcanvas"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="expModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b style="color:var(--accent);font-size:1.05rem">📖 Explain Function — Live Sandbox</b>
+      <button class="btn" onclick="closeExplain()">✕ Close</button>
+    </div>
+    <div class="fn-pills" id="fnPills"></div>
+    <div class="rule-box" id="fnRules"></div>
+    <label style="font-size:.78rem;color:var(--muted)">Edit the live code below and tap <b>Test It</b> to see what happens:</label>
+    <textarea id="expCode" style="min-height:85px" spellcheck="false"></textarea>
+    <div class="row">
+      <button class="btn ok" onclick="runExplain()">▶ Test It</button>
+      <span style="font-size:.76rem;color:var(--muted)">Try removing quotes around words to see the error!</span>
+    </div>
+    <pre id="expOut" style="min-height:60px">Sandbox output...</pre>
+  </div>
+</div>
+<script>
+const EXPLAINS=[
+  {fn:"print()",code:'print("Hello PyBlocks!")\nprint(42)',rules:'<b>print()</b> displays text or numbers on screen.<br>• <b>Words (strings)</b> MUST be inside quotes: "Hello" or \'Hello\'.<br>• <b>Numbers &amp; math</b> do NOT need quotes: print(10 + 5) prints 15.'},
+  {fn:"variables",code:'hero = "Kai"\nhp = 100\nprint(hero, "has", hp, "HP")',rules:'<b>Variables</b> store data in a labeled box using =.<br>• Variable names cannot have spaces (use player_hp).<br>• Put quotes around text values, no quotes for numbers.'},
+  {fn:"if / else",code:'score = 85\nif score >= 80:\n    print("Rank S!")\nelse:\n    print("Keep trying")',rules:'<b>if / else</b> makes decisions.<br>• Always end the if and else lines with a colon (:).<br>• Indent the code inside by <b>4 spaces</b> (tap Tab in the quick-bar).'},
+  {fn:"for loop",code:'for i in range(1, 5):\n    print("Wave", i)',rules:'<b>for i in range(start, stop)</b> repeats code.<br>• range(1, 5) counts 1, 2, 3, 4 (stops right before the second number).<br>• Remember the colon (:) and 4-space indent!'},
+  {fn:"dict {}",code:'loot = {"Sword": 25, "Potion": 10}\nprint("Sword dmg:", loot["Sword"])',rules:'<b>Dictionaries {}</b> pair keys with values (like an inventory or stats table).<br>• Look up a value using square brackets: loot["Sword"].'},
+  {fn:"random",code:'import random\nroll = random.randint(1, 6)\nprint("Rolled:", roll)',rules:'<b>random.randint(a, b)</b> picks a random whole number from a to b (inclusive).<br>• Always put import random at the top first.'},
+  {fn:"turtle",code:'import turtle\nt = turtle.Turtle()\nt.color("cyan")\nfor i in range(4):\n    t.forward(70)\n    t.right(90)',rules:'<b>turtle</b> draws graphics on the canvas!<br>• t.forward(70) moves 70 pixels; t.right(90) turns 90 degrees.<br>• Combine with a for loop to draw polygons and spirals.'}
+];
+
+function mkSec(cid,sidx,sname,bpName,bpCode,items){
+  return items.map((it,i)=>{
+    const num=i+1,id=`c${cid}_s${sidx}_${num}`,boss=num===8;
+    return{id,cid,sidx,sname,num,boss,title:`${cid}.${sidx}.${num} ${it[0]}`,goal:it[1],starter:it[2],hint:it[3],check:it[4],bp:boss?{id:`bp_${cid}_${sidx}`,name:bpName,code:bpCode}:null};
+  });
+}
+
+const COURSES=[
+  {id:1,name:"Course 1: Python Fundamentals",desc:"48 Stages • 6 Section Blueprints",sections:[
+    ...mkSec(1,1,"Sec 1: Print & Numbers","f-String Print",'name = "Coder"\nprint(f"Hello {name}!")',[
+      ["First Broadcast","Print exact text: Hello World",'print("")','Use quotes inside print("Hello World")',o=>o.includes("Hello World")],
+      ["Two Lines","Print Line 1 then Line 2",'print("Line 1")\n','Add a second print("Line 2")',o=>o.includes("Line 1")&&o.includes("Line 2")],
+      ["Quick Math","Print the result of 12 * 8",'print()','Numbers do not use quotes: print(12 * 8)',o=>o.includes("96")],
+      ["Order of Ops","Print (10 + 5) * 2",'print()','Put parentheses around 10 + 5',o=>o.includes("30")],
+      ["Remainder %","Print 17 % 5",'print()','% gives the remainder after division',o=>o.trim()==="2"],
+      ["Star Banner","Print ***PY***",'print("")','Put ***PY*** inside quotes',o=>o.includes("***PY***")],
+      ["Multi-Arg Print","Print Score: and 500 together",'print("Score:", )','Pass 500 as the second argument',o=>o.includes("Score: 500")],
+      ["BOSS 1.8: Boot Sequence","Print SYSTEM READY and 100",'','Print both SYSTEM READY and 100',o=>o.includes("SYSTEM READY")&&o.includes("100")]
+    ]),
+    ...mkSec(1,2,"Sec 2: Variables & Types","Variables & Math",'hp = 100\ndmg = 25\nprint("HP left:", hp - dmg)',[
+      ["Hero Name","Store \"Alex\" in hero and print it",'hero = ""\nprint(hero)','Set hero = "Alex"',o=>o.includes("Alex")],
+      ["Coins +50","Start coins = 100, add 50, print coins",'coins = 100\n','Use coins = coins + 50',o=>o.trim()==="150"],
+      ["Swap Values","Set a=1, b=2, swap them and print a, b",'a = 1\nb = 2\n','Try a, b = b, a',o=>o.includes("2 1")],
+      ["Area Calc","Set w=7, h=6 and print w * h",'w = 7\nh = 6\n','Print w * h',o=>o.trim()==="42"],
+      ["Score Bonus","Set s=40, multiply by 3, print s",'s = 40\n','s = s * 3',o=>o.trim()==="120"],
+      ["String Glue","Combine \"Py\" + \"Blocks\" and print",'a = "Py"\nb = "Blocks"\n','Print a + b',o=>o.includes("PyBlocks")],
+      ["Type Cast","Print \"Lv \" + str(9)",'lv = 9\n','Wrap lv inside str(lv)',o=>o.includes("Lv 9")],
+      ["BOSS 2.8: Stat Card","Set hp=80, shield=20, print total 100",'hp = 80\nshield = 20\n','Print hp + shield',o=>o.trim()==="100"]
+    ]),
+    ...mkSec(1,3,"Sec 3: Strings & Slicing","String Toolkit",'msg = "python"\nprint(msg.upper(), len(msg))',[
+      ["Shout It","Print \"arcade\".upper()",'w = "arcade"\n','Call w.upper()',o=>o.includes("ARCADE")],
+      ["Whisper It","Print \"QUIET\".lower()",'w = "QUIET"\n','Call w.lower()',o=>o.includes("quiet")],
+      ["Word Length","Print len(\"PyBlocks\")",'','Use len("PyBlocks")',o=>o.trim()==="8"],
+      ["First Letter","Print first char of \"Dragon\"",'w = "Dragon"\n','Index 0 is first: w',o=>o.trim()==="D"],
+      ["Last Letter","Print last char of \"Dragon\"",'w = "Dragon"\n','Use w[-1]',o=>o.trim()==="n"],
+      ["Slice Prefix","Print first 3 chars of \"Cyberpunk\"",'w = "Cyberpunk"\n','Use w[0:3]',o=>o.trim()==="Cyb"],
+      ["Replace Word","Replace \"cat\" with \"fox\" in \"red cat\"",'s = "red cat"\n','Use s.replace("cat","fox")',o=>o.includes("red fox")],
+      ["BOSS 3.8: Tag Formatter","Print \"#\" + \"hero\".upper() + \"_01\"",'tag = "hero"\n','Combine "#", tag.upper(), and "_01"',o=>o.includes("#HERO_01")]
+    ]),
+    ...mkSec(1,4,"Sec 4: If / Else Decisions","If / Else Gate",'xp = 120\nif xp >= 100:\n    print("Level Up!")\nelse:\n    print("Keep grinding")',[
+      ["Gate Check","If key == True, print \"Open\"",'key = True\n','if key:\n    print("Open")',o=>o.includes("Open")],
+      ["HP Warning","If hp < 20, print \"LOW HP\"",'hp = 12\n','Check if hp < 20:',o=>o.includes("LOW HP")],
+      ["Else Branch","Set power=5; if >10 print Win else Lose",'power = 5\n','Add else:\n    print("Lose")',o=>o.includes("Lose")],
+      ["Elif Tier","Set pts=75; >=90 Gold, >=70 Silver, else Bronze",'pts = 75\n','Use elif pts >= 70:',o=>o.includes("Silver")],
+      ["Even Check","If 14 % 2 == 0, print \"Even\"",'n = 14\n','Use n % 2 == 0',o=>o.includes("Even")],
+      ["And Logic","If age>=12 and pass_ok: print \"Enter\"",'age = 13\npass_ok = True\n','Combine with and',o=>o.includes("Enter")],
+      ["Or Logic","If vip or coins>=100: print \"Access\"",'vip = False\ncoins = 120\n','Combine with or',o=>o.includes("Access")],
+      ["BOSS 4.8: Boss Shield","Set atk=55, def_v=30; if atk>def_v print Hit (25)",'atk = 55\ndef_v = 30\n','Print atk - def_v when atk > def_v',o=>o.includes("25")]
+    ]),
+    ...mkSec(1,5,"Sec 5: Loops & Lists","For Loop & List",'items = ["Key", "Map", "Gem"]\nfor x in items:\n    print("Found:", x)',[
+      ["Count 0..4","Use range(5) to print 0 to 4",'for i in range(5):\n    ','print(i) inside loop',o=>o.includes("0")&&o.includes("4")],
+      ["Count 1..5","Print numbers 1 through 5",'for i in range(1, 6):\n    ','Use range(1, 6)',o=>o.includes("1")&&o.includes("5")],
+      ["Sum 1..5","Loop 1..5 and print total 15",'total = 0\n','Add i to total each step',o=>o.trim()==="15"],
+      ["List Item 2","Print \"Bow\" from [\"Sword\",\"Bow\",\"Staff\"]",'gear = ["Sword","Bow","Staff"]\n','Index 1 is Bow',o=>o.includes("Bow")],
+      ["Append Loot","Append \"Ruby\" to bag and print len(bag)",'bag = ["Gold"]\n','bag.append("Ruby")',o=>o.trim()==="2"],
+      ["Loop List","Print each item in [\"A\",\"B\",\"C\"]",'for x in ["A","B","C"]:\n    ','print(x)',o=>o.includes("A")&&o.includes("C")],
+      ["While Countdown","While n > 0 print n and subtract 1 (start n=3)",'n = 3\n','while n > 0:\n    print(n)\n    n -= 1',o=>o.includes("3")&&o.includes("1")],
+      ["BOSS 5.8: Loot Sum","Sum using a loop and print 75",'nums =\n','Loop over nums and sum to 75',o=>o.trim()==="75"]
+    ]),
+    ...mkSec(1,6,"Sec 6: Functions & Dicts","Def & Dict {}",'def boost(x):\n    return x * 2\nstats = {"atk": boost(15)}\nprint(stats["atk"])',[
+      ["First Def","Define greet() that prints \"Hi!\" and call it",'def greet():\n    print("Hi!")\n','Call greet() at the bottom',o=>o.includes("Hi!")],
+      ["Return Double","Define dbl(n) returning n*2, print dbl(9)",'def dbl(n):\n    return n * 2\n','print(dbl(9))',o=>o.trim()==="18"],
+      ["Add Function","Define add(a,b) returning a+b, print add(7,8)",'','return a + b',o=>o.trim()==="15"],
+      ["Dict Lookup","Print price of \"Shield\" (45)",'shop = {"Potion": 15, "Shield": 45}\n','print(shop["Shield"])',o=>o.trim()==="45"],
+      ["Dict Add","Add \"Helm\": 30 to shop and print len(shop)",'shop = {"Potion": 15}\n','shop["Helm"] = 30',o=>o.trim()==="2"],
+      ["Dict Loop","Print all keys in {\"HP\":100,\"MP\":50}",'d = {"HP":100,"MP":50}\n','for k in d: print(k)',o=>o.includes("HP")&&o.includes("MP")],
+      ["Default Arg","def power(x, m=3): return x*m; print power(4)",'def power(x, m=3):\n    return x * m\n','print(power(4))',o=>o.trim()==="12"],
+      ["BOSS 6.8: Hero Engine","Define calc(a,b)->a+b, store in d[\"tot\"], print 99",'','Combine function + dict to print 99',o=>o.trim()==="99"]
+    ])
+  ]},
+  {id:2,name:"Course 2: Turtle Art & Geometry",desc:"24 Stages • 3 Section Blueprints",sections:[
+    ...mkSec(2,1,"Sec 1: Lines & Polygons","Polygon Loop",'import turtle\nt = turtle.Turtle()\nfor i in range(6):\n    t.forward(55)\n    t.right(60)',[
+      ["First Line","Move turtle forward 80 and print Line",'import turtle\nt = turtle.Turtle()\n','t.forward(80)\nprint("Line")',o=>o.includes("Line")],
+      ["Right Angle","Move forward 60, right 90, forward 60; print L",'import turtle\nt = turtle.Turtle()\n','Use t.right(90) and print("L")',o=>o.includes("L")],
+      ["Square Loop","Draw a 4-sided square with range(4) and print Square",'import turtle\nt = turtle.Turtle()\n','4 sides, 90 deg turns, print("Square")',o=>o.includes("Square")],
+      ["Triangle","Draw 3 sides turning 120 deg; print Tri",'import turtle\nt = turtle.Turtle()\n','range(3) and t.right(120)',o=>o.includes("Tri")],
+      ["Pentagon","Draw 5 sides turning 72 deg; print Pent",'import turtle\nt = turtle.Turtle()\n','360 / 5 = 72',o=>o.includes("Pent")],
+      ["Hexagon","Draw 6 sides turning 60 deg; print Hex",'import turtle\nt = turtle.Turtle()\n','360 / 6 = 60',o=>o.includes("Hex")],
+      ["Octagon","Draw 8 sides turning 45 deg; print Oct",'import turtle\nt = turtle.Turtle()\n','360 / 8 = 45',o=>o.includes("Oct")],
+      ["BOSS 1.8: Twin Polygons","Draw a square and a triangle; print Twin",'import turtle\nt = turtle.Turtle()\n','Run two loops and print("Twin")',o=>o.includes("Twin")]
+    ]),
+    ...mkSec(2,2,"Sec 2: Pen, Color & Fills","Filled Star",'import turtle\nt = turtle.Turtle()\nt.color("gold")\nt.begin_fill()\nfor i in range(5):\n    t.forward(80)\n    t.right(144)\nt.end_fill()',[
+      ["Neon Pen","Set t.color cyan and forward 70; print Cyan",'import turtle\nt = turtle.Turtle()\n','t.color("cyan")',o=>o.includes("Cyan")],
+      ["Thick Brush","Set t.pensize(5) and forward 70; print Bold",'import turtle\nt = turtle.Turtle()\n','t.pensize(5)',o=>o.includes("Bold")],
+      ["Jump Move","Use penup(), goto(40,40), pendown(); print Jump",'import turtle\nt = turtle.Turtle()\n','Lift pen before goto',o=>o.includes("Jump")],
+      ["Circle Stamp","Draw t.circle(45); print Circle",'import turtle\nt = turtle.Turtle()\n','t.circle(45)',o=>o.includes("Circle")],
+      ["Filled Box","Use begin_fill() & end_fill() on a square; print Fill",'import turtle\nt = turtle.Turtle()\n','Wrap square loop in begin_fill/end_fill',o=>o.includes("Fill")],
+      ["5-Point Star","Loop 5 times: forward(80), right(144); print Star",'import turtle\nt = turtle.Turtle()\n','Turn angle is 144',o=>o.includes("Star")],
+      ["Dashed Line","Loop 5 times: forward(12), penup, forward(8), pendown; print Dash",'import turtle\nt = turtle.Turtle()\n','Toggle penup/pendown in loop',o=>o.includes("Dash")],
+      ["BOSS 2.8: Target Rings","Draw 2 circles of radius 30 and 60; print Target",'import turtle\nt = turtle.Turtle()\n','Call t.circle(30) and t.circle(60)',o=>o.includes("Target")]
+    ]),
+    ...mkSec(2,3,"Sec 3: Spirals & Mandalas","Rainbow Spiral",'import turtle\nt = turtle.Turtle()\nt.speed(0)\ncols = ["cyan","magenta","yellow","lime"]\nfor i in range(36):\n    t.color(cols[i%4])\n    t.forward(i*3)\n    t.right(91)',[
+      ["Growing Spiral","Loop i in range(20): forward(i*4), right(90); print Spiral",'import turtle\nt = turtle.Turtle()\n','Multiply i * 4 inside forward',o=>o.includes("Spiral")],
+      ["Web Twist","Loop i in range(24): forward(i*3), right(61); print Web",'import turtle\nt = turtle.Turtle()\n','61 degrees creates a twist',o=>o.includes("Web")],
+      ["Color Cycle","Use cols[i % 3] across 15 steps; print Cycle",'import turtle\nt = turtle.Turtle()\ncols = ["red","cyan","lime"]\n','t.color(cols[i % 3])',o=>o.includes("Cycle")],
+      ["Pinwheel","Loop 8 times: draw square then right(45); print Pinwheel",'import turtle\nt = turtle.Turtle()\n','Nested loop + right(45)',o=>o.includes("Pinwheel")],
+      ["Flower Petals","Loop 6 times: t.circle(35), right(60); print Flower",'import turtle\nt = turtle.Turtle()\n','6 circles rotated by 60 deg',o=>o.includes("Flower")],
+      ["Starburst","Loop 12 times: forward(60), backward(60), right(30); print Burst",'import turtle\nt = turtle.Turtle()\n','Forward then backward from center',o=>o.includes("Burst")],
+      ["Vortex","Loop i in range(30): circle(i*2), right(15); print Vortex",'import turtle\nt = turtle.Turtle()\n','Growing circles + rotation',o=>o.includes("Vortex")],
+      ["BOSS 3.8: Grand Mandala","Draw a 12-step colored mandala and print Mandala",'import turtle\nt = turtle.Turtle()\n','Combine color + loop + print("Mandala")',o=>o.includes("Mandala")]
+    ])
+  ]},
+  {id:3,name:"Course 3: Mini-Game Dev & Spy Ciphers",desc:"24 Stages • 3 Section Blueprints",sections:[
+    ...mkSec(3,1,"Sec 1: RNG & Dice Mechanics","Dice Roller",'import random\nd1 = random.randint(1, 6)\nd2 = random.randint(1, 6)\nprint(f"Rolled {d1}+{d2} = {d1+d2}")',[
+      ["Coin Flip","Import random, flip randint(0,1), print Flip",'import random\n','print("Flip", random.randint(0,1))',o=>o.includes("Flip")],
+      ["D20 Roll","Roll random.randint(1,20) and print D20:",'import random\n','print("D20:", random.randint(1,20))',o=>o.includes("D20:")],
+      ["Crit Check","If roll >= 18 print CRIT else HIT (test roll=19)",'roll = 19\n','if roll >= 18: print("CRIT")',o=>o.includes("CRIT")],
+      ["Random Loot","Use random.choice([\"Gem\",\"Key\",\"Gold\"]) and print",'import random\n','print(random.choice(["Gem","Key","Gold"]))',o=>/Gem|Key|Gold/.test(o)],
+      ["Damage Range","Pick dmg = random.randint(10,15) and print Dmg:",'import random\n','print("Dmg:", dmg)',o=>o.includes("Dmg:")],
+      ["3-Roll Sum","Roll 3 dice in a loop and print Total:",'import random\n','Sum 3 randint(1,6) rolls',o=>o.includes("Total:")],
+      ["Drop Chance","If random.randint(1,100) <= 100: print Rare",'import random\n','Always triggers when <= 100',o=>o.includes("Rare")],
+      ["BOSS 1.8: Loot Chest","Roll gold 50..100 and print Chest: <gold>",'import random\n','Use randint(50,100)',o=>o.includes("Chest:")]
+    ]),
+    ...mkSec(3,2,"Sec 2: RPG Combat Loops","RPG Battle Loop",'hp = 50\nfor turn in range(1, 4):\n    hp -= 15\n    print(f"Turn {turn}: Boss HP {hp}")',[
+      ["3-Turn Slash","Loop 3 turns reducing boss=60 by 20; print boss (0)",'boss = 60\n','boss -= 20 inside range(3)',o=>o.trim().endsWith("0")],
+      ["Heal Cap","Add 30 to hp=85 but cap at 100 with min(100, hp+30)",'hp = 85\n','print(min(100, hp + 30))',o=>o.trim()==="100"],
+      ["Shield Block","Subtract shield=12 from hit=30 (min 0); print 18",'hit = 30\nshield = 12\n','print(max(0, hit - shield))',o=>o.trim()==="18"],
+      ["Poison Tick","Loop 4 ticks dealing 5 dmg to hp=30; print 10",'hp = 30\n','4 * 5 = 20 dmg -> 10 left',o=>o.trim()==="10"],
+      ["Mana Cost","If mp>=20 subtract 20 and print Cast (mp=35)",'mp = 35\n','Print Cast and remaining mp 15',o=>o.includes("Cast")&&o.includes("15")],
+      ["XP Level","Divide xp=450 // 100 to print Level 4",'xp = 450\n','Use // integer division',o=>o.includes("4")],
+      ["Combo Mult","Loop hits multiplying by 2; print 120",'hits = [10, 20, 30]\n','sum(hits) * 2 = 120',o=>o.trim()==="120"],
+      ["BOSS 2.8: Arena Duel","Simulate 4 attacks of 25 on boss=100; print Victory",'boss = 100\n','When boss <= 0 print Victory',o=>o.includes("Victory")]
+    ]),
+    ...mkSec(3,3,"Sec 3: Spy Ciphers & Safety","Spy Cipher",'code = {"A":".-","B":"-...","C":"-.-."}\nmsg = "CAB"\nprint(" ".join(code[c] for c in msg))',[
+      ["Reverse Code","Reverse SECRET using [::-1] and print",'s = "SECRET"\n','print(s[::-1])',o=>o.includes("TERCES")],
+      ["ASCII Shift","Print chr(ord(\"A\") + 3) -> D",'','ord("A")+3 is 68 -> D',o=>o.trim()==="D"],
+      ["Caesar Loop","Shift each char in ABC by +1 -> BCD",'w = "ABC"\n','Build shifted string BCD',o=>o.includes("BCD")],
+      ["Morse Lookup","Map SOS with {\"S\":\"...\",\"O\":\"---\"} -> ... --- ...",'m = {"S":"...","O":"---"}\n','Join mapped symbols',o=>o.includes("... --- ...")],
+      ["Pin Mask","Print \"*\" * 4 + \"1234\"[-2:] -> ****34",'pin = "1234"\n','Slice last 2 digits',o=>o.includes("****34")],
+      ["Try / Except","Catch 1/0 with try/except and print Safe",'try:\n    x = 1 / 0\nexcept:\n    ','print("Safe")',o=>o.includes("Safe")],
+      ["Mixed Case Fix","Normalize \"sOs\".upper() before lookup; print SOS",'raw = "sOs"\n','Use .upper()',o=>o.includes("SOS")],
+      ["BOSS 3.8: Agent Decoder","Decode with chr() to print HI",'nums = [72, 73]\n','chr(72)+chr(73) == "HI"',o=>o.includes("HI")]
+    ])
+  ]},
+  {id:4,name:"Course 4: Retro Arcade & Text Adventures",desc:"24 Stages • 3 Section Blueprints",sections:[
+    ...mkSec(4,1,"Sec 1: Rooms & Inventory","Room Navigator",'rooms = {"Hall":{"east":"Armory"},"Armory":{"west":"Hall"}}\npos = "Hall"\npos = rooms[pos]["east"]\nprint("Entered:", pos)',[
+      ["Room Title","Print == DUNGEON GATE ==",'','Print the exact banner',o=>o.includes("== DUNGEON GATE ==")],
+      ["Room Map","Create rooms={\"Gate\":\"Forest\"} and print rooms[\"Gate\"]",'rooms = {"Gate": "Forest"}\n','Print rooms["Gate"]',o=>o.includes("Forest")],
+      ["North Exit","Move pos from Camp to exits[\"north\"] (Cave)",'exits = {"north": "Cave", "south": "Lake"}\n','Print exits["north"]',o=>o.includes("Cave")],
+      ["Bag Check","If Torch in bag: print Lit",'bag = ["Map", "Torch"]\n','Use in operator',o=>o.includes("Lit")],
+      ["Pick Up Key","Append Rusty Key to bag and print bag",'bag = []\n','bag.append("Rusty Key")',o=>o.includes("Rusty Key")],
+      ["Locked Door","If Key in bag: print Unlocked else Locked",'bag = ["Key"]\n','Check "Key" in bag',o=>o.includes("Unlocked")],
+      ["2-Step Walk","Start at Start->Bridge->Tower via dict; print Tower",'m = {"Start":"Bridge","Bridge":"Tower"}\n','p = m[m["Start"]]',o=>o.includes("Tower")],
+      ["BOSS 1.8: Quest Log","Collect Sword & Orb in bag, reach Sanctum; print Ready",'bag = []\n','Append both items and print("Ready")',o=>o.includes("Ready")]
+    ]),
+    ...mkSec(4,2,"Sec 2: Arcade Physics & Collisions","Arcade Hitbox",'px, py = 10, 10\ncx, cy = 10, 10\nif px == cx and py == cy:\n    print("COIN +100!")',[
+      ["Player Move","Start x=5, move right +3, print x (8)",'x = 5\n','x += 3',o=>o.trim()==="8"],
+      ["Screen Clamp","Keep x=105 inside 0..100 using min(100, x); print 100",'x = 105\n','print(min(100, x))',o=>o.trim()==="100"],
+      ["Gravity Step","Start vy=0, add gravity=2 three times; print vy (6)",'vy = 0\n','Loop 3 times adding 2',o=>o.trim()==="6"],
+      ["Coin Pickup","If px==cx and py==cy: print +100",'px, py = 4, 7\ncx, cy = 4, 7\n','Compare both coordinates',o=>o.includes("+100")],
+      ["Hitbox Distance","If abs(12 - 15) <= 4: print HIT",'','abs(12 - 15) is 3 <= 4',o=>o.includes("HIT")],
+      ["Extra Life","If score >= 1000: lives += 1; print lives (4)",'score = 1200\nlives = 3\n','Increment lives to 4',o=>o.trim()==="4"],
+      ["Wave Speed","Loop wave 1..3 printing speed = wave * 5 (5,10,15)",'for wave in range(1, 4):\n    ','print(wave * 5)',o=>o.includes("15")],
+      ["BOSS 2.8: Pixel Dodge","Move player from x=0 by +4 twice to dodge laser at x=5; print Safe (8)",'x = 0\n','x += 4 twice -> 8 != 5',o=>o.includes("Safe")&&o.includes("8")]
+    ]),
+    ...mkSec(4,3,"Sec 3: Scoreboards & Boss Encounters","Arcade Leaderboard",'scores =\nscores.sort(reverse=True)\nfor i, s in enumerate(scores, 1):\n    print(f"#{i}: {s}")',[
+      ["High Score","Print max()",'scores =\n','Use max(scores)',o=>o.trim()==="890"],
+      ["Sort Board","Sort descending and print first",'s =\n','s.sort(reverse=True); print(s)',o=>o.trim()==="1200"],
+      ["Combo Bonus","Base 200 * combo 4 = 800; print Score: 800",'','print("Score:", 200 * 4)',o=>o.includes("Score: 800")],
+      ["Rank Badge","If pts>=900 print S else A (pts=950)",'pts = 950\n','Print S',o=>o.trim()==="S"],
+      ["Boss Phases","If hp>50 print Phase 1 else Phase 2 (hp=35)",'hp = 35\n','Print Phase 2',o=>o.includes("Phase 2")],
+      ["Timer Bonus","Add secs_left*10 (12*10) to score=500; print 620",'score = 500\nsecs_left = 12\n','500 + 120 = 620',o=>o.trim()==="620"],
+      ["3-Life Run","Loop hits reducing lives=3 to 0; print GAME OVER",'lives = 3\n','When lives == 0 print GAME OVER',o=>o.includes("GAME OVER")],
+      ["BOSS 3.8: Final Arcade Boss","Deal 40*3=120 dmg to Dragon(100) and print CHAMPION 120",'dragon = 100\n','Print CHAMPION 120',o=>o.includes("CHAMPION 120")]
+    ])
+  ]}
+];
+let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"theme":"macchiato","custom":null}');
+if(!state.bps)state.bps=[];
+function save(){localStorage.setItem("pbs_v2",JSON.stringify(state));}
+
+function applyTheme(){
+  const THEMES={macchiato:{bg:"#181825",panel:"#1e1e2e",card:"#252538",accent:"#8aadf4",accent2:"#a6da95",text:"#cad3f5"},crimson:{bg:"#1a0d10",panel:"#261217",card:"#33181f",accent:"#f38ba8",accent2:"#fab387",text:"#fce8ec"},emerald:{bg:"#0c1a14",panel:"#12261d",card:"#183327",accent:"#40c080",accent2:"#a6e3a1",text:"#e2f5ec"},amber:{bg:"#1c150c",panel:"#291f12",card:"#362918",accent:"#f5a97f",accent2:"#eed49f",text:"#fbf0e4"},cyber:{bg:"#0d0c1d",panel:"#161430",card:"#1f1c42",accent:"#c6a0f6",accent2:"#7dc4e4",text:"#eae6ff"},ocean:{bg:"#0b1622",panel:"#112233",card:"#172e45",accent:"#38bdf8",accent2:"#34d399",text:"#e0f2fe"},mono:{bg:"#111111",panel:"#1b1b1b",card:"#262626",accent:"#ffffff",accent2:"#a3a3a3",text:"#f5f5f5"},sunset:{bg:"#1d101c",panel:"#2b172a",card:"#3b2039",accent:"#ff7b72",accent2:"#ffa657",text:"#ffeff7"}};
+  const t=state.custom||THEMES[state.theme]||THEMES.macchiato;
+  const r=document.documentElement.style;
+  r.setProperty("--bg",t.bg);r.setProperty("--panel",t.panel);r.setProperty("--card",t.card);
+  r.setProperty("--accent",t.accent);r.setProperty("--accent2",t.accent2);r.setProperty("--text",t.text);
+}
+function showToast(icon,sub,name){
+  document.getElementById("tIcon").textContent=icon;
+  document.getElementById("tSub").textContent=sub;
+  document.getElementById("tName").textContent=name;
+  const el=document.getElementById("toast");el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),3600);
+}
+function unlockTrophy(id,label){
+  if(!state.trophies.includes(id)){
+    state.trophies.push(id);save();
+    showToast("🏆","Achievement Unlocked!",label);
+  }
+}
+
+let curCid=1,curSt=COURSES.sections,usedHint=false;
+const SYMS=[["Tab","    "],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
+function buildQbar(){
+  const qb=document.getElementById("qbar");qb.innerHTML="";
+  SYMS.forEach(([lbl,ins])=>{
+    const b=document.createElement("button");b.textContent=lbl;
+    b.onclick=()=>{
+      const ta=document.getElementById("code"),s=ta.selectionStart,e=ta.selectionEnd;
+      ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
+      const pos=ins.length===2&&ins!=="  "?s+1:s+ins.length;
+      ta.focus();ta.setSelectionRange(pos,pos);
+    };
+    qb.appendChild(b);
+  });
+}
+
+function renderTabs(){
+  const box=document.getElementById("cTabs");box.innerHTML="";
+  COURSES.forEach(c=>{
+    const cleared=c.sections.filter(s=>state.done.includes(s.id)).length;
+    const b=document.createElement("button");b.className="ctab"+(c.id===curCid?" active":"");
+    b.innerHTML=`<b>Course ${c.id}</b><span>${c.name.split(": ")} (${cleared}/${c.sections.length})</span>`;
+    b.onclick=()=>{curCid=c.id;curSt=c.sections;renderTabs();renderList();loadStage(curSt);};
+    box.appendChild(b);
+  });
+}
+function renderList(){
+  const box=document.getElementById("stageList");box.innerHTML="";
+  const c=COURSES.find(x=>x.id===curCid);
+  let lastSec="";
+  c.sections.forEach(s=>{
+    if(s.sname!==lastSec){
+      lastSec=s.sname;
+      const h=document.createElement("div");h.className="sec-lbl";h.textContent=s.sname;box.appendChild(h);
+    }
+    const b=document.createElement("button");
+    const isDone=state.done.includes(s.id);
+    b.className="st-btn"+(s.id===curSt.id?" active":"")+(isDone?" done":"");
+    b.innerHTML=`<span>${s.boss?"👑 ":""}${s.title}</span><span>${isDone?"✅":s.boss?"🎁":""}</span>`;
+    b.onclick=()=>loadStage(s);box.appendChild(b);
+  });
+}
+function loadStage(s){
+  curSt=s;usedHint=false;
+  document.getElementById("stTitle").textContent=s.title;
+  document.getElementById("stReward").textContent=s.bp?`🎁 Section Boss Unlocks: ${s.bp.name}`:(s.boss?"👑 Boss Stage":"+25 XP");
+  document.getElementById("stGoal").textContent=s.goal;
+  document.getElementById("code").value=s.starter;
+  document.getElementById("hintTxt").textContent="";
+  document.getElementById("out").textContent="Ready to run...";
+  document.getElementById("tcanvas").innerHTML="";
+  renderList();
+}
+function useHint(){usedHint=true;document.getElementById("hintTxt").textContent="💡 "+curSt.hint;}
+function resetCode(){document.getElementById("code").value=curSt.starter;}
+
+function execPy(src,outEl,tTarget,onDone){
+  let buf="";outEl.textContent="";
+  if(tTarget)document.getElementById(tTarget).innerHTML="";
+  Sk.configure({
+    output:t=>{buf+=t;outEl.textContent=buf;},
+    read:x=>{if(Sk.builtinFiles===undefined||Sk.builtinFiles["files"][x]===undefined)throw"File not found: "+x;return Sk.builtinFiles["files"][x];}
+  });
+  if(tTarget)(Sk.TurtleGraphics||(Sk.TurtleGraphics={})).target=tTarget;
+  Sk.misceval.asyncToPromise(()=>Sk.importMainWithBody("<stdin>",false,src,true))
+    .then(()=>onDone&&onDone(buf,null))
+    .catch(err=>{outEl.textContent=buf+"\n❌ "+err.toString();onDone&&onDone(buf,err);});
+}
+
+function runStage(){
+  const src=document.getElementById("code").value;
+  execPy(src,document.getElementById("out"),"tcanvas",(buf,err)=>{
+    if(!err&&curSt.check(buf)){
+      if(!state.done.includes(curSt.id)){
+        state.done.push(curSt.id);
+        state.xp+=curSt.boss?60:25;
+        if(curSt.bp&&!state.bps.some(x=>x.id===curSt.bp.id)){
+          state.bps.push(curSt.bp);
+          showToast("🎁","Section Blueprint Unlocked!",curSt.bp.name);
+        }else{
+          showToast("✅","Stage Cleared!",curSt.title);
+        }
+        if(state.done.length>=1)unlockTrophy("first_step","First Print");
+        if(curSt.boss&&!usedHint)unlockTrophy("no_hint","Pure Skill");
+        COURSES.forEach(c=>{
+          if(c.sections.every(x=>state.done.includes(x.id)))unlockTrophy(`c${c.id}_boss`,`Course ${c.id} Champion`);
+        });
+        if(state.done.length>=120)unlockTrophy("grandmaster","PyBlocks Legend");
+        save();renderTabs();renderList();
+      }else{
+        showToast("✅","Passed Again!",curSt.title);
+      }
+    }
+  });
+}
+
+let curExp=EXPLAINS;
+function openExplain(){
+  document.getElementById("expModal").classList.add("open");
+  const p=document.getElementById("fnPills");p.innerHTML="";
+  EXPLAINS.forEach(ex=>{
+    const b=document.createElement("button");b.textContent=ex.fn;
+    b.className=ex.fn===curExp.fn?"active":"";
+    b.onclick=()=>{curExp=ex;openExplain();};
+    p.appendChild(b);
+  });
+  document.getElementById("fnRules").innerHTML=curExp.rules;
+  document.getElementById("expCode").value=curExp.code;
+  document.getElementById("expOut").textContent="Tap 'Test It' to run!";
+}
+function closeExplain(){document.getElementById("expModal").classList.remove("open");}
+function runExplain(){
+  unlockTrophy("sec_explain","Curious Mind");
+  execPy(document.getElementById("expCode").value,document.getElementById("expOut"),null,null);
+}
+
+applyTheme();buildQbar();renderTabs();loadStage(curSt);
+</script>
+</body>
+</html>
