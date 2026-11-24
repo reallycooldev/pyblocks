@@ -1,20 +1,19 @@
-# 🐍 PyBlocks Studio V9
+# PyBlocks Studio V2.0 🐍⚡
 
-A lightweight (~79 KB core!), offline-ready Python 3 IDE, multi-file workspace, interactive Course Academy, and `turtle` graphics playground built to run smoothly on phones, tablets, and school laptops.
+An offline-ready, browser-based **Python 3 IDE**, **120-Stage Quad-Course Academy**, and **Turtle Graphics Playground** powered by Skulpt.
 
-### 🚀 Live Links
-* **Cloudflare:** [pyblocks-studio.aiden-austin.workers.dev](https://workers.dev)
-* **GitHub Pages:** [reallycooldev.github.io/pyblocks](https://github.io)
+## ✨ What's New in V2.0
+- **Quad-Course Academy (120 Stages):**
+  - **Course 1:** Python Fundamentals (48 Stages)
+  - **Course 2:** Turtle Art & Geometry (24 Stages)
+  - **Course 3:** Mini-Game Dev & Spy Ciphers (24 Stages)
+  - **Course 4:** Retro Arcade & Text Adventures (24 Stages)
+- **📖 Explain Function Live Sandbox:** Interactive overlay inside Courses to test `print()`, `variables`, `if/else`, `for`, `dict`, `random`, and `turtle` live with beginner rule tips.
+- **Per-Section Blueprint Unlocks:** Defeat section bosses (`1.8`, `2.8`, `3.8`, etc.) to unlock reusable code blocks in Free-Build Studio.
+- **Top-Center Achievement Toasts:** Slide-down notifications for all 12 shown & secret `???` trophies.
+- **Theme-Synced Logo & Shareable Theme Codes:** Dynamic `PyBlocks` title colors + copy/paste `PBS2:...` theme sharing.
+- **Mobile Quick-Symbol Bar:** One-tap `Tab`, `( )`, `[ ]`, `{ }`, `" "`, `:`, and `=` buttons above the editor.
 
----
-
-### ✨ Features
-* **🏠 3-Page Hub Architecture:** Cleanly separated into the **Main Menu (`index.html`)**, **Course Academy (`courses.html`)**, and **Free-Build Studio (`studio.html`)** with synced themes, XP, trophies, and progress across every page.
-* **🎓 96-Stage Triple-Course Academy & Unlockable Blueprints:**
-  * **Course 1: Python Fundamentals (48 Stages):** Master Print, Variables, Strings, Decisions, Loops & Lists, and Turtle Intro to unlock **Course 1 Blueprints** (`f-String`, `Dictionary {}`, `while` loops, `def` functions, `Random`, and `Turtle`).
-  * **Course 2: Turtle Art & Geometry (24 Stages):** Master Polygons, Pen Control & Fills, and Rainbow Spirals to unlock **Course 2 Blueprints** (`Polygon Loop`, `Filled Shape`, `Jump Move`, `Rainbow Spiral`, and `Starburst`).
-  * **Course 3: Mini-Game Dev & Spy Ciphers (24 Stages):** Build RNG dice rollers, turn-based RPG loops, and mixed-case Morse decoders to unlock **Course 3 Blueprints** (`Dice Roller`, `RPG Battle Loop`, `Cipher Loop`, and `Try / Except Shield`).
-* **🗂️ Multi-File Project Tabs & 🎨 Live Syntax Highlighting:** Create, switch, save, and manage multiple `.py` files at once with real-time color highlighting for Python keywords, strings, numbers, and comments.
-* **⚡ XP Ranks & 🏆 12 Shown/Secret Trophies:** Earn XP for every cleared stage and No-Hint Boss Test to rank up from *Novice Scripter* to *Cyber Legend*, and hunt down both visible milestones and secret `???` trophies in Studio.
-* **100% Offline Python & Graphics:** Powered by local Skulpt files (`skulpt.min.js` & `skulpt-stdlib.js`) with live `turtle` drawing and **Save PNG** artwork export.
-* **💡 Smart Error Translator, 🔍 Variable X-Ray & Custom Themes:** Translates Python tracebacks into plain-English fix tips, inspects variable values after every run, and includes 8 preset themes plus a synced live **`🎨`** color picker.
+## 🚀 Roadmap
+- **V2.1 / V2.2:** Polish, community demo templates & sound effects.
+- **V3.0:** Drag-and-drop Blockly mode or second language support.
