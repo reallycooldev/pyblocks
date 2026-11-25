@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio V2.0 — Free-Build IDE</title>
+<title>PyBlocks Studio 2.0 — Free-Build IDE</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -26,17 +26,18 @@ body{background:var(--bg);color:var(--text);min-height:100vh;padding:12px 12px 4
 .qbar{display:flex;flex-wrap:wrap;gap:5px}
 .qbar button{background:var(--card);border:1px solid var(--border);color:var(--accent);padding:5px 9px;border-radius:7px;font-family:monospace;font-size:.8rem;font-weight:700;cursor:pointer}
 .ed-shell{display:grid;grid-template-columns:38px 1fr;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;min-height:260px}
-#lines{background:var(--card);color:var(--muted);padding:12px 6px;font-family:monospace;font-size:.86rem;line-height:1.5;text-align:right;user-select:none}
+#lines{background:var(--card);color:var(--muted);padding:12px 6px;font-family:monospace;font-size:14px;line-height:21px;text-align:right;user-select:none}
 .ed-wrap{position:relative;min-height:260px}
 #hl,#hl span,#code{font-family:monospace!important;font-size:14px!important;line-height:21px!important;font-weight:400!important;letter-spacing:0!important}
-#hl,#code{margin:0;padding:12px;tab-size:4;white-space:pre-wrap;word-wrap:break-word;width:100%;min-height:260px}
-#hl{position:absolute;inset:0;pointer-events:none;color:var(--text)}
-#code{position:relative;background:transparent;color:transparent;caret-color:var(--accent);border:none;outline:none;resize:vertical}
+#hl,#code{margin:0;padding:12px;tab-size:4;white-space:pre;overflow:auto;width:100%;height:260px}
+#hl{position:absolute;inset:0;pointer-events:none;color:var(--text);overflow:hidden}
+#code{position:relative;background:transparent;color:transparent;caret-color:var(--accent);border:none;outline:none;resize:none}
+#lines{overflow:hidden;height:260px}
 .kw{color:#bd93f9}.fn{color:#569cd6}.str{color:#f1fa8c}.num{color:#f5a97f}.com{color:#6272a4}
-.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.out-grid{display:grid;grid-template-columns:1fr 264px;gap:10px}
 @media(max-width:580px){.out-grid{grid-template-columns:1fr}}
-pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:150px;font-family:monospace;font-size:.82rem;white-space:pre-wrap;overflow-x:auto}
-#tcanvas{background:#11111b;border:1px solid var(--border);border-radius:10px;min-height:150px;display:flex;align-items:center;justify-content:center}
+pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:220px;font-family:monospace;font-size:.82rem;white-space:pre-wrap;overflow-x:auto}
+#tcanvas{width:260px;height:220px;margin:0 auto;background:var(--card);border:2px solid var(--accent);border-radius:10px;position:relative;overflow:hidden}
 .bp-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
 .bp-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:9px;text-align:left;font-size:.79rem;cursor:pointer}
 .bp-btn:hover{border-color:var(--accent)}
@@ -51,7 +52,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">⚡ Free-Build Studio (V2.0)</b>
+    <b style="color:var(--accent)">⚡ Free-Build Studio (2.0)</b>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <select id="demoSel" onchange="loadDemo(this.value)">
         <option value="">✨ Load Demo Template...</option>
@@ -66,9 +67,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
       <a href="courses.html">Courses 🎓</a>
     </div>
   </div>
-
   <div class="tabs" id="fileTabs"></div>
-
   <div class="main-grid">
     <div class="box">
       <div class="qbar" id="qbar"></div>
@@ -91,7 +90,6 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
         <div id="tcanvas"></div>
       </div>
     </div>
-
     <div class="box">
       <b style="font-size:.88rem;color:var(--accent)">🧩 Blueprints (<span id="bpCnt">0</span> Unlocked)</b>
       <div style="font-size:.73rem;color:var(--muted)">Core blocks + Section Boss rewards (1.8, 2.8, 3.8...) + your Custom Blocks!</div>
@@ -111,15 +109,15 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"customBps":[],"theme":"macchiato","custom":null}');
 if(!state.bps)state.bps=[];
 if(!state.customBps)state.customBps=[];
-let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio V2.0\\nprint(\\"Hello Studio!\\")\\n"}]');
+let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.0\\nprint(\\"Hello Studio!\\")\\n"}]');
 let activeIdx=0;
 
 const DEMOS={
-  mandala:'# Rainbow Mandala Demo\nimport turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["cyan", "magenta", "yellow", "lime", "orange"]\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.forward(i * 3)\n    t.right(91)\nprint("Mandala Complete!")\n',
+  mandala:'# Rainbow Mandala Demo\nimport turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#0284c7", "#db2777", "#d97706", "#16a34a", "#7c3aed"]\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.forward(i * 2)\n    t.right(91)\nprint("Mandala Complete!")\n',
   rpg:'# RPG Boss Simulator\nimport random\nboss_hp = 100\nfor turn in range(1, 5):\n    dmg = random.randint(20, 35)\n    boss_hp = max(0, boss_hp - dmg)\n    print(f"Turn {turn}: Dealt {dmg} dmg -> Boss HP: {boss_hp}")\n    if boss_hp == 0:\n        print("VICTORY!")\n        break\n',
   cipher:'# Spy Morse & Caesar Cipher\nmorse = {"H":"....","I":"..","P":"--.","Y":"-.--"}\nword = "HIPY"\nencoded = " ".join(morse[ch] for ch in word)\nprint("Original:", word)\nprint("Morse:", encoded)\n',
   dungeon:'# Text Adventure Room Navigator\nrooms = {"Gate":{"north":"Hall"},"Hall":{"south":"Gate","east":"Vault"},"Vault":{"west":"Hall"}}\npos = "Gate"\nbag = ["Torch", "Rusty Key"]\nfor step in ["north", "east"]:\n    pos = rooms[pos][step]\n    print("Moved", step, "->", pos)\nif "Rusty Key" in bag:\n    print("Vault Unlocked!")\n',
-  arcade:'# Arcade High-Score Leaderboard\nscores = [450, 1280, 920, 1540, 760]\nscores.sort(reverse=True)\nprint("=== TOP SCORES ===")\nfor rank, s in enumerate(scores, 1):\n    print(f"#{rank}: {s} pts")\n'
+  arcade:'# Arcade High-Score Leaderboard\nscores = [450, 920, 780, 1150, 610]\nscores.sort(reverse=True)\nprint("=== TOP SCORES ===")\nfor rank, s in enumerate(scores, 1):\n    print(f"#{rank}: {s} pts")\n'
 };
 
 const CORE_BLOCKS=[
@@ -129,7 +127,7 @@ const CORE_BLOCKS=[
   {tag:"Core",name:"Function Def",code:'def combo(dmg, mult=2):\n    return dmg * mult\nprint(combo(25))'},
   {tag:"Core",name:"Dictionary Table",code:'stats = {"HP": 100, "ATK": 35}\nprint("ATK:", stats["ATK"])'},
   {tag:"Core",name:"Random Dice",code:'import random\nprint("Roll:", random.randint(1, 20))'},
-  {tag:"Core",name:"Turtle Square",code:'import turtle\nt = turtle.Turtle()\nt.color("cyan")\nfor i in range(4):\n    t.forward(70)\n    t.right(90)'},
+  {tag:"Core",name:"Turtle Square",code:'import turtle\nt = turtle.Turtle()\nt.color("blue")\nfor i in range(4):\n    t.forward(60)\n    t.right(90)'},
   {tag:"Core",name:"Try / Except Safe",code:'try:\n    print(10 / 2)\nexcept:\n    print("Safe fallback!")'}
 ];
 
@@ -207,10 +205,11 @@ function buildQbar(){
 function syncHL(){
   const ta=document.getElementById("code");
   files[activeIdx].code=ta.value;saveAll();
-  const count=ta.value.split("\n").length;
-  document.getElementById("lines").innerHTML=Array.from({length:count},(_,i)=>i+1).join("<br>");
+  let n=1;
+  const nums=ta.value.split("\n").map(ln=>!/^\S/.test(ln)?"&nbsp;":n++);
+  document.getElementById("lines").innerHTML=nums.join("<br>");
   const esc=ta.value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const rx=/(#.*)|(".*?"|'.*?')|\b(def|return|if|elif|else|for|while|in|import|from|try|except|break|continue|True|False|None|and|or|not)\b|\b(print|input|range|len|str|int|float|list|dict|set|tuple|round|sum|sorted|type|min|max|abs|chr|ord|enumerate)\b|(?<![a-zA-Z0-9_])(\d+(?:\.\d+)?)\b/g;
+  const rx=/(#.*)|(".*?"|'.*?')|\b(def|return|if|elif|else|for|while|in|import|from|try|except|break|continue|True|False|None|and|or|not)\b|\b(print|input|range|len|str|int|float|list|dict|set|tuple|round|sum|sorted|type|min|max|abs|chr|ord|enumerate)\b|(?<![a-zA-Z0-9_])(\d+(?:\.\d+)?)\b/g;
   document.getElementById("hl").innerHTML=esc.replace(rx,(m,com,str,kw,fn,num)=>{
     if(com)return`<span class="com">${com}</span>`;
     if(str)return`<span class="str">${str}</span>`;
@@ -220,7 +219,11 @@ const rx=/(#.*)|(".*?"|'.*?')|\b(def|return|if|elif|else|for|while|in|import|fro
   })+"\n";
 }
 document.getElementById("code").addEventListener("input",syncHL);
-
+document.getElementById("code").addEventListener("scroll",function(){
+  document.getElementById("hl").scrollTop=this.scrollTop;
+  document.getElementById("hl").scrollLeft=this.scrollLeft;
+  document.getElementById("lines").scrollTop=this.scrollTop;
+});
 function renderTabs(){
   const box=document.getElementById("fileTabs");box.innerHTML="";
   files.forEach((f,i)=>{
@@ -260,9 +263,11 @@ function runStudio(){
   document.getElementById("tcanvas").innerHTML="";
   Sk.configure({
     output:t=>{buf+=t;outEl.textContent=buf;},
-    read:x=>{if(Sk.builtinFiles===undefined||Sk.builtinFiles["files"][x]===undefined)throw"File not found: "+x;return Sk.builtinFiles["files"][x];}
+    read:x=>{if(Sk.builtinFiles===undefined||Sk.builtinFiles["files"][x]===undefined)throw"File not found: "+x;return Sk.builtinFiles["files"][x];},
+    inputfun:q=>prompt(q||"Enter input:")||"",
+    inputfunTakesPrompt:true
   });
-  (Sk.TurtleGraphics||(Sk.TurtleGraphics={})).target="tcanvas";
+  Sk.TurtleGraphics={target:"tcanvas",width:260,height:220};
   Sk.misceval.asyncToPromise(()=>Sk.importMainWithBody("<stdin>",false,src,true))
     .then(()=>{
       unlockTrophy("studio_run","Sandbox Builder");
@@ -270,7 +275,7 @@ function runStudio(){
       const vars=[];
       src.split("\n").forEach(ln=>{
         const m=ln.match(/^\s*([a-zA-Z_]\w*)\s*=\s*([^=].*)$/);
-        if(m)vars.push(`${m[1]} = ${m[2].trim()}`);
+        if(m)vars.push(`${m.at(1)} = ${m.at(2).trim()}`);
       });
       document.getElementById("xray").textContent=vars.length?vars.join("\n"):"No top-level variables assigned.";
     })
@@ -297,7 +302,6 @@ function savePng(){
 }
 
 applyTheme();buildQbar();renderTabs();loadFile();renderBPs();
-print
 </script>
 </body>
 </html>
