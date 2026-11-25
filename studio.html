@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.0 — Free-Build IDE</title>
+<title>PyBlocks Studio 2.0.1 — Free-Build IDE</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -52,7 +52,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">⚡ Free-Build Studio (2.0)</b>
+    <b style="color:var(--accent)">⚡ Free-Build Studio (2.0.1)</b>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <select id="demoSel" onchange="loadDemo(this.value)">
         <option value="">✨ Load Demo Template...</option>
@@ -109,7 +109,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"customBps":[],"theme":"macchiato","custom":null}');
 if(!state.bps)state.bps=[];
 if(!state.customBps)state.customBps=[];
-let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.0\\nprint(\\"Hello Studio!\\")\\n"}]');
+let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.0.1\\nprint(\\"Hello Studio!\\")\\n"}]');
 let activeIdx=0;
 
 const DEMOS={
