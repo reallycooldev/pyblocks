@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.1 — Free-Build IDE</title>
+<title>PyBlocks Studio 2.2 — Free-Build IDE</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -52,7 +52,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">⚡ Free-Build Studio (2.1)</b>
+    <b style="color:var(--accent)">⚡ Free-Build Studio (2.2)</b>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <select id="demoSel" onchange="loadDemo(this.value)">
         <option value="">✨ Load Demo Template...</option>
@@ -110,7 +110,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"customBps":[],"theme":"macchiato","custom":null}');
 if(!state.bps)state.bps=[];
 if(!state.customBps)state.customBps=[];
-let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.1\\nprint(\\"Hello Studio!\\")\\n"}]');
+let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.2\\nprint(\\"Hello Studio!\\")\\n"}]');
 let activeIdx=0;
 const DEMOS={
   mandala:'# Rainbow Mandala Demo\nimport turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#0284c7", "#db2777", "#d97706", "#16a34a", "#7c3aed"]\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.forward(i * 2)\n    t.right(91)\nprint("Mandala Complete!")\n',
@@ -119,7 +119,7 @@ const DEMOS={
   rpg:'# RPG Boss Simulator\nimport random\nboss_hp = 100\nfor turn in range(1, 5):\n    dmg = random.randint(20, 35)\n    boss_hp = max(0, boss_hp - dmg)\n    print(f"Turn {turn}: Dealt {dmg} dmg -> Boss HP: {boss_hp}")\n    if boss_hp == 0:\n        print("VICTORY!")\n        break\n',
   cipher:'# Spy Morse & Caesar Cipher\nmorse = {"H":"....","I":"..","P":"--.","Y":"-.--"}\nword = "HIPY"\nencoded = " ".join(morse[ch] for ch in word)\nprint("Original:", word)\nprint("Morse:", encoded)\n',
   dungeon:'# Text Adventure Room Navigator\nrooms = {"Gate":{"north":"Hall"},"Hall":{"south":"Gate","east":"Vault"},"Vault":{"west":"Hall"}}\npos = "Gate"\nbag = ["Torch", "Rusty Key"]\nfor step in ["north", "east"]:\n    pos = rooms[pos][step]\n    print("Moved", step, "->", pos)\nif "Rusty Key" in bag:\n    print("Vault Unlocked!")\n',
-  arcade:'# Arcade High-Score Leaderboard\nscores = [450, 920, 780, 1150, 610]\nscores.sort(reverse=True)\nprint("=== TOP SCORES ===")\nfor rank, s in enumerate(scores, 1):\n    print(f"#{rank}: {s} pts")\n'
+  arcade:'# Arcade High-Score Leaderboard\nscores =\nscores.sort(reverse=True)\nprint("=== TOP SCORES ===")\nfor rank, s in enumerate(scores, 1):\n    print(f"#{rank}: {s} pts")\n'
 };
 
 const CORE_BLOCKS=[
@@ -157,14 +157,21 @@ function unlockTrophy(id,label){
   }
 }
 
+function delCustomBlock(e,idx){
+  e.stopPropagation();
+  state.customBps.splice(idx,1);
+  saveAll();renderBPs();
+  showToast("🗑️","Removed Custom Block");
+}
 function renderBPs(){
   const list=document.getElementById("bpList");list.innerHTML="";
   document.getElementById("bpCnt").textContent=state.bps.length;
   const unlocked=state.bps.map(b=>({tag:"Boss Reward",name:b.name,code:b.code}));
-  const custom=state.customBps.map(b=>({tag:"Custom",name:b.name,code:b.code}));
+  const custom=state.customBps.map((b,idx)=>({tag:"Custom",name:b.name,code:b.code,cIdx:idx}));
   [...unlocked,...custom,...CORE_BLOCKS].forEach(bp=>{
     const b=document.createElement("button");b.className="bp-btn";
-    b.innerHTML=`<div class="bp-tag">${bp.tag}</div><b>➕ ${bp.name}</b>`;
+    const del=bp.cIdx!==undefined?`<span onclick="delCustomBlock(event,${bp.cIdx})" style="float:right;color:#f38ba8;font-weight:800">✕</span>`:"";
+    b.innerHTML=`${del}<div class="bp-tag">${bp.tag}</div><b>➕ ${bp.name}</b>`;
     b.onclick=()=>{
       const ta=document.getElementById("code");
       ta.value+=(ta.value.endsWith("\n")||ta.value===""?"":"\n")+bp.code+"\n";
@@ -178,6 +185,7 @@ function addCustomBlock(){
   const c=document.getElementById("cbCode").value.trim();
   if(!n||!c){showToast("⚠️","Enter block title & code");return;}
   state.customBps.push({name:n,code:c});saveAll();
+  unlockTrophy("block_smith","Block Smith");
   document.getElementById("cbName").value="";document.getElementById("cbCode").value="";
   renderBPs();showToast("✨","Saved Custom Block!");
 }
@@ -273,10 +281,11 @@ function runStudio(){
     .then(()=>{
       unlockTrophy("studio_run","Sandbox Builder");
       if(buf.split(/\s+/).includes("42"))unlockTrophy("sec_42","Meaning of Life");
+      if(document.querySelector("#tcanvas canvas"))unlockTrophy("sec_turtle","Canvas Painter");
       const vars=[];
       src.split("\n").forEach(ln=>{
         const m=ln.match(/^\s*([a-zA-Z_]\w*)\s*=\s*([^=].*)$/);
-        if(m)vars.push(`${m.at(1)} = ${m.at(2).trim()}`);
+        if(m)vars.push(`${m} = ${m.trim()}`);
       });
       document.getElementById("xray").textContent=vars.length?vars.join("\n"):"No top-level variables assigned.";
     })
@@ -293,6 +302,7 @@ function downloadPy(){
   const f=files[activeIdx];
   const blob=new Blob([f.code],{type:"text/plain"});
   const a=document.createElement("a");a.download=f.name;a.href=URL.createObjectURL(blob);a.click();
+  unlockTrophy("code_export","Code Exporter");
   showToast("💾","Downloaded "+f.name);
 }
 
