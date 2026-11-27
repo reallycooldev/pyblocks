@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.0.1 — Free-Build IDE</title>
+<title>PyBlocks Studio 2.1 — Free-Build IDE</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -37,7 +37,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh;padding:12px 12px 4
 .out-grid{display:grid;grid-template-columns:1fr 264px;gap:10px}
 @media(max-width:580px){.out-grid{grid-template-columns:1fr}}
 pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:220px;font-family:monospace;font-size:.82rem;white-space:pre-wrap;overflow-x:auto}
-#tcanvas{width:260px;height:220px;margin:0 auto;background:var(--card);border:2px solid var(--accent);border-radius:10px;position:relative;overflow:hidden}
+#tcanvas{width:260px;height:220px;margin:0 auto;background:#C0BFBC;border:2px solid var(--accent);border-radius:10px;position:relative;overflow:hidden}
 .bp-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
 .bp-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:9px;text-align:left;font-size:.79rem;cursor:pointer}
 .bp-btn:hover{border-color:var(--accent)}
@@ -52,18 +52,19 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">⚡ Free-Build Studio (2.0.1)</b>
+    <b style="color:var(--accent)">⚡ Free-Build Studio (2.1)</b>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <select id="demoSel" onchange="loadDemo(this.value)">
         <option value="">✨ Load Demo Template...</option>
         <option value="mandala">🐢 Rainbow Mandala</option>
+        <option value="shop">🛒 Shopping List Price-Checker</option>
+        <option value="fizzbuzz">🔢 Classic FizzBuzz (1-30)</option>
         <option value="rpg">⚔️ RPG Boss Simulator</option>
         <option value="cipher">🕵️ Spy Morse &amp; Caesar</option>
         <option value="dungeon">🏰 Text Adventure Room</option>
         <option value="arcade">👾 Arcade High-Score Board</option>
       </select>
       <button class="btn" onclick="downloadPy()">💾 .py</button>
-      <button class="btn" onclick="savePng()">🖼️ PNG</button>
       <a href="courses.html">Courses 🎓</a>
     </div>
   </div>
@@ -109,11 +110,12 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"customBps":[],"theme":"macchiato","custom":null}');
 if(!state.bps)state.bps=[];
 if(!state.customBps)state.customBps=[];
-let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.0.1\\nprint(\\"Hello Studio!\\")\\n"}]');
+let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.1\\nprint(\\"Hello Studio!\\")\\n"}]');
 let activeIdx=0;
-
 const DEMOS={
   mandala:'# Rainbow Mandala Demo\nimport turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#0284c7", "#db2777", "#d97706", "#16a34a", "#7c3aed"]\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.forward(i * 2)\n    t.right(91)\nprint("Mandala Complete!")\n',
+  shop:'# Shopping List Price-Checker\nprices = {"apple": 2, "milk": 4, "bread": 3, "steak": 12}\ncart = ["apple", "milk", "apple", "bread"]\ntotal = 0\nfor item in cart:\n    total += prices[item]\n    print(f"+ {item}: ${prices[item]}")\nword = "item" if len(cart) == 1 else "items"\nprint(f"Total for {len(cart)} {word}: ${total}")\n',
+  fizzbuzz:'# Classic FizzBuzz (1 to 30)\nfor n in range(1, 31):\n    if n % 3 == 0 and n % 5 == 0:\n        print("FizzBuzz")\n    elif n % 3 == 0:\n        print("Fizz")\n    elif n % 5 == 0:\n        print("Buzz")\n    else:\n        print(n)\n',
   rpg:'# RPG Boss Simulator\nimport random\nboss_hp = 100\nfor turn in range(1, 5):\n    dmg = random.randint(20, 35)\n    boss_hp = max(0, boss_hp - dmg)\n    print(f"Turn {turn}: Dealt {dmg} dmg -> Boss HP: {boss_hp}")\n    if boss_hp == 0:\n        print("VICTORY!")\n        break\n',
   cipher:'# Spy Morse & Caesar Cipher\nmorse = {"H":"....","I":"..","P":"--.","Y":"-.--"}\nword = "HIPY"\nencoded = " ".join(morse[ch] for ch in word)\nprint("Original:", word)\nprint("Morse:", encoded)\n',
   dungeon:'# Text Adventure Room Navigator\nrooms = {"Gate":{"north":"Hall"},"Hall":{"south":"Gate","east":"Vault"},"Vault":{"west":"Hall"}}\npos = "Gate"\nbag = ["Torch", "Rusty Key"]\nfor step in ["north", "east"]:\n    pos = rooms[pos][step]\n    print("Moved", step, "->", pos)\nif "Rusty Key" in bag:\n    print("Vault Unlocked!")\n',
@@ -201,7 +203,6 @@ function buildQbar(){
     qb.appendChild(b);
   });
 }
-
 function syncHL(){
   const ta=document.getElementById("code");
   files[activeIdx].code=ta.value;saveAll();
@@ -293,12 +294,6 @@ function downloadPy(){
   const blob=new Blob([f.code],{type:"text/plain"});
   const a=document.createElement("a");a.download=f.name;a.href=URL.createObjectURL(blob);a.click();
   showToast("💾","Downloaded "+f.name);
-}
-function savePng(){
-  const c=document.querySelector("#tcanvas canvas");
-  if(!c){showToast("⚠️","Draw with turtle first!");return;}
-  const a=document.createElement("a");a.download="pyblocks_v2_art.png";a.href=c.toDataURL();a.click();
-  showToast("🖼️","Turtle Art Saved!");
 }
 
 applyTheme();buildQbar();renderTabs();loadFile();renderBPs();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.0.1</title>
+<title>PyBlocks Studio 2.1</title>
 <style>
 :root{--bg:#181825;--panel:#1e1e2e;--card:#252538;--border:#313244;--accent:#8aadf4;--accent2:#a6da95;--text:#cad3f5;--muted:#8087a2}
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
@@ -30,6 +30,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-d
 .nav-btn p{font-size:.84rem;color:var(--muted);line-height:1.4}
 .box{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
 .box h3{font-size:.95rem;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.box-note{font-size:.78rem;color:var(--muted);margin-bottom:8px;line-height:1.35}
 .themes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .t-btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 11px;border-radius:10px;font-size:.8rem;font-weight:600;cursor:pointer}
 .t-btn.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
@@ -45,21 +46,21 @@ body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-d
 </style>
 </head>
 <body>
-<div id="toast"><div class="toast-icon" id="tIcon">🏆</div><div><div class="toast-title">Achievement Unlocked!</div><div class="toast-name" id="tName">Trophy</div></div></div>
+<div id="toast"><div class="toast-icon" id="tIcon">🏆</div><div><div class="toast-title" id="tLabel">Studio Notice</div><div class="toast-name" id="tName">Ready</div></div></div>
 <div class="wrap">
   <div class="hero">
     <div class="logo">PyBlocks</div>
-    <div class="ver">STUDIO 2.0.1 • 120 STAGES</div>
+    <div class="ver">STUDIO 2.1 • 120 STAGES</div>
     <div class="sub">Offline Python 3 IDE, Quad-Course Academy &amp; Turtle Graphics Playground</div>
   </div>
   <div class="stats">
     <div class="stat"><div class="stat-v" id="stProg">0 / 120</div><div class="stat-l">Stages Cleared</div></div>
-    <div class="stat"><div class="stat-v" id="stRank">Novice</div><div class="stat-l" id="stXp">0 XP</div></div>
+    <div class="stat"><div class="stat-v" id="stRank">Novice Scripter</div><div class="stat-l" id="stXp">0 XP</div></div>
     <div class="stat"><div class="stat-v" id="stTr">0 / 12</div><div class="stat-l">Trophies</div></div>
   </div>
   <div class="nav-grid">
     <a class="nav-btn" href="courses.html"><h2>🎓 Quad-Course Academy</h2><p>Master 120 stages across Python Fundamentals, Turtle Geometry, Spy Ciphers &amp; Retro Arcade Adventures + Explain Function Sandbox.</p></a>
-    <a class="nav-btn" href="studio.html"><h2>⚡ Free-Build Studio</h2><p>Multi-file Python tabs, live syntax highlighting, mobile quick-symbol bar, unlocked section Blueprints &amp; Turtle PNG export.</p></a>
+    <a class="nav-btn" href="studio.html"><h2>⚡ Free-Build Studio</h2><p>Multi-file Python tabs, live syntax highlighting, mobile quick-symbol bar, unlocked section Blueprints &amp; .py code export.</p></a>
   </div>
   <div class="box">
     <h3><span>🎨 Theme &amp; Shareable Theme Codes</span><label style="font-size:.8rem;cursor:pointer">Custom 🎨 <input type="color" id="pickAccent" style="vertical-align:middle;border:none;background:none;width:24px;height:24px;cursor:pointer"></label></h3>
@@ -68,6 +69,15 @@ body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-d
       <input type="text" id="themeCode" placeholder="Paste PBS2 theme code">
       <button class="s-btn" onclick="applyCode()">Import</button>
       <button class="s-btn sec" onclick="copyCode()">Copy My Code</button>
+    </div>
+  </div>
+  <div class="box">
+    <h3><span>💾 Progress Transfer Code (PBS_SAVE)</span><span style="font-size:.75rem;color:var(--muted)">Optional Sync</span></h3>
+    <p class="box-note">Keep your save code somewhere safe to transfer your XP, cleared stages, trophies &amp; blueprints to another device.</p>
+    <div class="share-row">
+      <input type="text" id="saveCode" placeholder="Generate or paste PBS_SAVE:... code">
+      <button class="s-btn sec" onclick="exportSave()">Generate &amp; Copy</button>
+      <button class="s-btn" onclick="importSave()">Load Save</button>
     </div>
   </div>
   <div class="box">
@@ -105,8 +115,9 @@ const RANKS=[[0,"Novice Scripter"],[150,"Code Apprentice"],[400,"Python Tinkerer
 let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"theme":"macchiato","custom":null}');
 function save(){localStorage.setItem("pbs_v2",JSON.stringify(state));}
 
-function showToast(icon,title){
+function showToast(icon,title,label="Studio Notice"){
   document.getElementById("tIcon").textContent=icon;
+  document.getElementById("tLabel").textContent=label;
   document.getElementById("tName").textContent=title;
   const el=document.getElementById("toast");
   el.classList.add("show");
@@ -116,7 +127,7 @@ function unlockTrophy(id){
   if(!state.trophies.includes(id)){
     state.trophies.push(id);save();
     const tr=TROPHIES.find(x=>x.id===id);
-    if(tr)showToast("🏆",tr.r||tr.n);
+    if(tr)showToast("🏆",tr.r||tr.n,"Achievement Unlocked!");
     render();
   }
 }
@@ -142,12 +153,37 @@ function copyCode(){
 function applyCode(){
   const raw=document.getElementById("themeCode").value.trim();
   const p=raw.split(":");
-  if(p.length===7&&p==="PBS2"){
-    state.custom={bg:p,panel:p,card:p,accent:p,accent2:p,text:p};
+  if(p.length===7&&p[0]==="PBS2"){
+    state.custom={bg:p[1],panel:p[2],card:p[3],accent:p[4],accent2:p[5],text:p[6]};
     save();applyThemeObj(state.custom);unlockTrophy("sec_theme");renderThemes();
     showToast("✨","Custom Theme Imported!");
   }else{showToast("⚠️","Invalid PBS2 Theme Code");}
 }
+
+function exportSave(){
+  try{
+    const payload=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    const code="PBS_SAVE:"+payload;
+    const inp=document.getElementById("saveCode");
+    inp.value=code;inp.select();
+    navigator.clipboard?.writeText(code);
+    showToast("💾","Save Code Generated & Copied!");
+  }catch(e){showToast("⚠️","Could not export save");}
+}
+function importSave(){
+  const raw=document.getElementById("saveCode").value.trim();
+  if(!raw.startsWith("PBS_SAVE:")){showToast("⚠️","Invalid PBS_SAVE Code");return;}
+  try{
+    const data=JSON.parse(decodeURIComponent(escape(atob(raw.slice(9)))));
+    if(!Array.isArray(data.done)||typeof data.xp!=="number"||!Array.isArray(data.trophies))throw 0;
+    state={...state,...data};
+    save();
+    applyThemeObj(state.custom||THEMES[state.theme]||THEMES.macchiato);
+    renderThemes();render();
+    showToast("🎉","Progress Restored!");
+  }catch(e){showToast("⚠️","Corrupted Save Code");}
+}
+
 function renderThemes(){
   const box=document.getElementById("themeList");box.innerHTML="";
   Object.entries(THEMES).forEach(([k,v])=>{
@@ -158,7 +194,7 @@ function renderThemes(){
 }
 function render(){
   document.getElementById("stProg").textContent=`${state.done.length} / 120`;
-  let rk=RANKS;for(const [x,name]of RANKS)if(state.xp>=x)rk=name;
+  let rk=RANKS[0][1];for(const [x,name]of RANKS)if(state.xp>=x)rk=name;
   document.getElementById("stRank").textContent=rk;
   document.getElementById("stXp").textContent=`${state.xp} XP`;
   document.getElementById("stTr").textContent=`${state.trophies.length} / 12`;

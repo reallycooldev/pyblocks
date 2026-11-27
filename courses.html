@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.0.1 — Courses</title>
+<title>PyBlocks Studio 2.1 — Courses</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -17,6 +17,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh;padding:12px 12px 4
 .top a,.btn{background:var(--card);color:var(--text);border:1px solid var(--border);padding:7px 12px;border-radius:10px;text-decoration:none;font-size:.82rem;font-weight:700;cursor:pointer}
 .btn.pri{background:var(--accent);color:#11111b;border:none}
 .btn.ok{background:var(--accent2);color:#11111b;border:none}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 .c-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 @media(max-width:600px){.c-tabs{grid-template-columns:repeat(2,1fr)}}
 .ctab{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;text-align:left;cursor:pointer}
@@ -39,7 +40,7 @@ textarea{width:100%;min-height:150px;background:var(--bg);color:var(--text);bord
 .out-box{display:grid;grid-template-columns:1fr 264px;gap:10px}
 @media(max-width:560px){.out-box{grid-template-columns:1fr}}
 pre{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:220px;font-family:monospace;font-size:.83rem;white-space:pre-wrap;overflow-x:auto}
-#tcanvas{width:260px;height:220px;margin:0 auto;background:var(--card);border:2px solid var(--accent);border-radius:10px;position:relative;overflow:hidden}
+#tcanvas{width:260px;height:220px;margin:0 auto;background:#C0BFBC;border:2px solid var(--accent);border-radius:10px;position:relative;overflow:hidden}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:14px;z-index:9000}
 .modal-bg.open{display:flex}
 .modal{background:var(--panel);border:1px solid var(--accent);border-radius:16px;width:100%;max-width:560px;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:90vh;overflow-y:auto}
@@ -54,7 +55,7 @@ pre{background:var(--bg);border:1px solid var(--border);border-radius:10px;paddi
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">🎓 Quad-Course Academy (2.0.1)</b>
+    <b style="color:var(--accent)">🎓 Quad-Course Academy (2.1)</b>
     <div class="row">
       <button class="btn" onclick="openExplain()">📖 Explain Function</button>
       <a href="studio.html">Studio ⚡</a>
@@ -66,6 +67,12 @@ pre{background:var(--bg);border:1px solid var(--border);border-radius:10px;paddi
     <div class="work">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <h3 id="stTitle" style="color:var(--accent)">Stage</h3>
+        <div class="row">
+          <button class="btn" id="btnPrev" onclick="navStage(-1)">⬅️ Prev</button>
+          <button class="btn" id="btnNext" onclick="navStage(1)">Next ➡️</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <span id="stReward" style="font-size:.76rem;color:var(--accent2);font-weight:700"></span>
       </div>
       <div class="goal" id="stGoal"></div>
@@ -108,6 +115,7 @@ const EXPLAINS=[
   {fn:"variables",code:'hero = "Kai"\nhp = 100\nprint(hero, "has", hp, "HP")',rules:'<b>Variables</b> store data in a labeled box using =.<br>• Variable names cannot have spaces (use player_hp).<br>• Put quotes around text values, no quotes for numbers.'},
   {fn:"if / else",code:'score = 85\nif score >= 80:\n    print("Rank S!")\nelse:\n    print("Keep trying")',rules:'<b>if / else</b> makes decisions.<br>• Always end the if and else lines with a colon (:).<br>• Indent the code inside by <b>4 spaces</b> (tap Tab in the quick-bar).'},
   {fn:"for loop",code:'for i in range(1, 5):\n    print("Wave", i)',rules:'<b>for i in range(start, stop)</b> repeats code.<br>• range(1, 5) counts 1, 2, 3, 4 (stops right before the second number).<br>• Remember the colon (:) and 4-space indent!'},
+  {fn:"def ()",code:'def greet():\n    print("Hi!")\n\ngreet()',rules:'<b>def name():</b> creates your own custom command.<br>• Indent the recipe inside by <b>4 spaces</b>.<br>• To run it ("call" it), type <b>name()</b> on a new line at the bottom with NO spaces in front!'},
   {fn:"dict {}",code:'loot = {"Sword": 25, "Potion": 10}\nprint("Sword dmg:", loot["Sword"])',rules:'<b>Dictionaries {}</b> pair keys with values (like an inventory or stats table).<br>• Look up a value using square brackets: loot["Sword"].'},
   {fn:"random",code:'import random\nroll = random.randint(1, 6)\nprint("Rolled:", roll)',rules:'<b>random.randint(a, b)</b> picks a random whole number from a to b (inclusive).<br>• Always put import random at the top first.'},
   {fn:"turtle",code:'import turtle\nt = turtle.Turtle()\nt.color("blue")\nfor i in range(4):\n    t.forward(70)\n    t.right(90)',rules:'<b>turtle</b> draws graphics on the canvas!<br>• t.forward(70) moves 70 pixels; t.right(90) turns 90 degrees.<br>• Combine with a for loop to draw polygons and spirals.'}
@@ -173,7 +181,7 @@ const COURSES=[
       ["BOSS 5.8: Loot Sum","Sum [15, 25, 35] using a loop and print 75",'nums = [15, 25, 35]\n','Loop over nums and sum to 75',o=>o.trim()==="75"]
     ]),
     ...mkSec(1,6,"Sec 6: Functions & Dicts","Def & Dict {}",'def boost(x):\n    return x * 2\nstats = {"atk": boost(15)}\nprint(stats["atk"])',[
-      ["First Def","Define greet() that prints Hi! and call it",'def greet():\n    print("Hi!")\n','Call greet() at the bottom',o=>o.includes("Hi!")],
+      ["First Def","Define greet() that prints Hi! and run it by typing greet() on a new line at the bottom",'def greet():\n    print("Hi!")\n','Type greet() on a new line at the bottom with NO spaces in front',o=>o.includes("Hi!")],
       ["Return Double","Define dbl(n) returning n*2, print dbl(9)",'def dbl(n):\n    return n * 2\n','print(dbl(9))',o=>o.trim()==="18"],
       ["Add Function","Define add(a,b) returning a+b, print add(7,8)",'','return a + b',o=>o.trim()==="15"],
       ["Dict Lookup","Print price of Shield (45)",'shop = {"Potion": 15, "Shield": 45}\n','print(shop["Shield"])',o=>o.trim()==="45"],
@@ -184,20 +192,20 @@ const COURSES=[
     ])
   ]},
   {id:2,name:"Course 2: Turtle Art & Geometry",desc:"24 Stages • 3 Section Blueprints",sections:[
-    ...mkSec(2,1,"Sec 1: Lines & Polygons","Polygon Loop",'import turtle\nt = turtle.Turtle()\nfor i in range(6):\n    t.forward(55)\n    t.right(60)',[
+    ...mkSec(2,1,"Sec 1: Quick Turtle Tricks","Polygon Loop",'import turtle\nt = turtle.Turtle()\nfor i in range(6):\n    t.forward(55)\n    t.right(60)',[
       ["First Line","Move turtle forward 80 and print Line",'import turtle\nt = turtle.Turtle()\n','t.forward(80)\nprint("Line")',o=>o.includes("Line")],
-      ["Right Angle","Move forward 60, right 90, forward 60; print L",'import turtle\nt = turtle.Turtle()\n','Use t.right(90) and print("L")',o=>o.includes("L")],
-      ["Square Loop","Draw a 4-sided square with range(4) and print Square",'import turtle\nt = turtle.Turtle()\n','4 sides, 90 deg turns, print("Square")',o=>o.includes("Square")],
-      ["Triangle","Draw 3 sides turning 120 deg; print Tri",'import turtle\nt = turtle.Turtle()\n','range(3) and t.right(120)',o=>o.includes("Tri")],
-      ["Pentagon","Draw 5 sides turning 72 deg; print Pent",'import turtle\nt = turtle.Turtle()\n','360 / 5 = 72',o=>o.includes("Pent")],
-      ["Hexagon","Draw 6 sides turning 60 deg; print Hex",'import turtle\nt = turtle.Turtle()\n','360 / 6 = 60',o=>o.includes("Hex")],
-      ["Octagon","Draw 8 sides turning 45 deg; print Oct",'import turtle\nt = turtle.Turtle()\n','360 / 8 = 45',o=>o.includes("Oct")],
-      ["BOSS 1.8: Twin Polygons","Draw a square and a triangle; print Twin",'import turtle\nt = turtle.Turtle()\n','Run two loops and print("Twin")',o=>o.includes("Twin")]
+      ["Right Turn","Move forward 60, right 90, forward 60; print L",'import turtle\nt = turtle.Turtle()\n','Use t.right(90) and print("L")',o=>o.includes("L")],
+      ["Turbo Square","Use t.speed(0) and draw a 4-sided square with range(4); print Square",'import turtle\nt = turtle.Turtle()\n','t.speed(0) makes drawing instant!',o=>o.includes("Square")],
+      ["Neon Triangle","Set t.color(\"cyan\") and draw 3 sides turning 120 deg; print Tri",'import turtle\nt = turtle.Turtle()\n','range(3) and t.right(120)',o=>o.includes("Tri")],
+      ["Pen Jump","Use t.penup(), t.goto(40,40), t.pendown(); print Jump",'import turtle\nt = turtle.Turtle()\n','Lift pen before goto so no line is drawn',o=>o.includes("Jump")],
+      ["Instant Circle","Draw a circle with t.circle(45); print Circle",'import turtle\nt = turtle.Turtle()\n','Call t.circle(45)',o=>o.includes("Circle")],
+      ["Dot Stamp","Stamp a size-20 red dot with t.dot(20, \"red\"); print Dot",'import turtle\nt = turtle.Turtle()\n','Use t.dot(20, "red")',o=>o.includes("Dot")],
+      ["BOSS 1.8: Mini House","Draw a square base + triangle roof; print House",'import turtle\nt = turtle.Turtle()\n','Combine a 4-side loop and a 3-side loop, then print("House")',o=>o.includes("House")]
     ]),
     ...mkSec(2,2,"Sec 2: Pen, Color & Fills","Filled Star",'import turtle\nt = turtle.Turtle()\nt.color("gold")\nt.begin_fill()\nfor i in range(5):\n    t.forward(80)\n    t.right(144)\nt.end_fill()',[
       ["Neon Pen","Set t.color blue and forward 70; print Blue",'import turtle\nt = turtle.Turtle()\n','t.color("blue")',o=>o.includes("Blue")],
       ["Thick Brush","Set t.pensize(5) and forward 70; print Bold",'import turtle\nt = turtle.Turtle()\n','t.pensize(5)',o=>o.includes("Bold")],
-      ["Jump Move","Use penup(), goto(40,40), pendown(); print Jump",'import turtle\nt = turtle.Turtle()\n','Lift pen before goto',o=>o.includes("Jump")],
+      ["Left Turn","Use t.left(90) and forward 60; print Left",'import turtle\nt = turtle.Turtle()\n','t.left(90) turns counter-clockwise',o=>o.includes("Left")],
       ["Circle Stamp","Draw t.circle(45); print Circle",'import turtle\nt = turtle.Turtle()\n','t.circle(45)',o=>o.includes("Circle")],
       ["Filled Box","Use begin_fill() & end_fill() on a square; print Fill",'import turtle\nt = turtle.Turtle()\n','Wrap square loop in begin_fill/end_fill',o=>o.includes("Fill")],
       ["5-Point Star","Loop 5 times: forward(80), right(144); print Star",'import turtle\nt = turtle.Turtle()\n','Turn angle is 144',o=>o.includes("Star")],
@@ -268,9 +276,9 @@ const COURSES=[
       ["Wave Speed","Loop wave 1..3 printing speed = wave * 5 (5,10,15)",'for wave in range(1, 4):\n    ','print(wave * 5)',o=>o.includes("15")],
       ["BOSS 2.8: Pixel Dodge","Move player from x=0 by +4 twice to dodge laser at x=5; print Safe (8)",'x = 0\n','x += 4 twice -> 8 != 5',o=>o.includes("Safe")&&o.includes("8")]
     ]),
-    ...mkSec(4,3,"Sec 3: Scoreboards & Boss Encounters","Arcade Leaderboard",'scores =\nscores.sort(reverse=True)\nfor i, s in enumerate(scores, 1):\n    print(f"#{i}: {s}")',[
-      ["High Score","Print max()",'scores =\n','Use max(scores)',o=>o.trim()==="890"],
-      ["Sort Board","Sort descending and print first",'s =\n','s.sort(reverse=True); print(s)',o=>o.trim()==="1200"],
+    ...mkSec(4,3,"Sec 3: Scoreboards & Boss Encounters","Arcade Leaderboard",'scores = [450, 920, 780]\nscores.sort(reverse=True)\nfor i, s in enumerate(scores, 1):\n    print(f"#{i}: {s}")',[
+      ["High Score","Print max(scores) (890)",'scores = [310, 890, 540]\n','Use max(scores)',o=>o.trim()==="890"],
+      ["Sort Board","Sort descending and print s[0] (1200)",'s = [400, 1200, 800]\n','s.sort(reverse=True); print(s[0])',o=>o.trim()==="1200"],
       ["Combo Bonus","Base 200 * combo 4 = 800; print Score: 800",'','print("Score:", 200 * 4)',o=>o.includes("Score: 800")],
       ["Rank Badge","If pts>=900 print S else A (pts=950)",'pts = 950\n','Print S',o=>o.trim()==="S"],
       ["Boss Phases","If hp>50 print Phase 1 else Phase 2 (hp=35)",'hp = 35\n','Print Phase 2',o=>o.includes("Phase 2")],
@@ -305,7 +313,7 @@ function unlockTrophy(id,label){
   }
 }
 
-let curCid=1,curSt=COURSES.sections,usedHint=false;
+let curCid=1,curSt=COURSES[0].sections[0],usedHint=false;
 const SYMS=[["Tab","    "],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
 function buildQbar(){
   const qb=document.getElementById("qbar");qb.innerHTML="";
@@ -326,8 +334,8 @@ function renderTabs(){
   COURSES.forEach(c=>{
     const cleared=c.sections.filter(s=>state.done.includes(s.id)).length;
     const b=document.createElement("button");b.className="ctab"+(c.id===curCid?" active":"");
-    b.innerHTML="<b>Course "+c.id+"</b><span>"+c.name.split(": ")+" ("+cleared+"/"+c.sections.length+")</span>";
-    b.onclick=()=>{curCid=c.id;curSt=c.sections;renderTabs();renderList();loadStage(curSt);};
+    b.innerHTML="<b>Course "+c.id+"</b><span>"+c.name.split(": ")[1]+" ("+cleared+"/"+c.sections.length+")</span>";
+    b.onclick=()=>{curCid=c.id;curSt=c.sections[0];renderTabs();renderList();loadStage(curSt);};
     box.appendChild(b);
   });
 }
@@ -347,8 +355,18 @@ function renderList(){
     b.onclick=()=>loadStage(s);box.appendChild(b);
   });
 }
+function navStage(dir){
+  const c=COURSES.find(x=>x.id===curCid);
+  const idx=c.sections.findIndex(x=>x.id===curSt.id);
+  const next=c.sections[idx+dir];
+  if(next)loadStage(next);
+}
 function loadStage(s){
   curSt=s;usedHint=false;
+  const c=COURSES.find(x=>x.id===curCid);
+  const idx=c.sections.findIndex(x=>x.id===s.id);
+  document.getElementById("btnPrev").disabled=idx<=0;
+  document.getElementById("btnNext").disabled=idx>=c.sections.length-1;
   document.getElementById("stTitle").textContent=s.title;
   document.getElementById("stReward").textContent=s.bp?"🎁 Section Boss Unlocks: "+s.bp.name:(s.boss?"👑 Boss Stage":"+25 XP");
   document.getElementById("stGoal").textContent=s.goal;
@@ -403,7 +421,7 @@ function runStage(){
   });
 }
 
-let curExp=EXPLAINS;
+let curExp=EXPLAINS[0];
 function openExplain(){
   document.getElementById("expModal").classList.add("open");
   const p=document.getElementById("fnPills");p.innerHTML="";
