@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.2 — Quad-Course Academy</title>
+<title>PyBlocks Studio 2.3
+— Quad-Course Academy</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -55,7 +56,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">🎓 Quad-Course Academy (2.2)</b>
+    <b style="color:var(--accent)">🎓 Quad-Course Academy (2.3)</b>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="openExplain()">📖 Explain Function</button>
       <a href="studio.html">Studio ⚡</a>
@@ -78,6 +79,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
       <textarea id="code" spellcheck="false"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn pri" onclick="runStage()">▶ Run &amp; Check</button>
+        <button class="btn" id="btnStageExp" onclick="openStageExplain()">📖 Explain</button>
         <button class="btn" onclick="useHint()">💡 Hint</button>
         <button class="btn" onclick="resetCode()">↺ Reset</button>
         <span id="hintTxt" style="font-size:.8rem;color:var(--accent2)"></span>
@@ -102,14 +104,21 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <script>window.onerror=(m,u,l)=>{document.getElementById("stGoal").textContent="❌ Line "+l+": "+m;};</script>
 <script>
 const EXPLAINS=[
-  {fn:"print()",rules:"<b>Syntax:</b> <code>print(value1, value2)</code><br><b>Rule:</b> Put text inside quotes <code>\" \"</code>. Separate multiple items with commas.",code:'name = "PyBlocks"\nprint("Welcome to", name, 2026)'},
-  {fn:"variables",rules:"<b>Syntax:</b> <code>score = 100</code><br><b>Rule:</b> Names can't start with numbers or have spaces. Use <code>+=</code> to add to a variable.",code:'hp = 50\nhp += 25\nprint("HP is now:", hp)'},
-  {fn:"if / else",rules:"<b>Syntax:</b> <code>if x &gt;= 10:</code><br><b>Rule:</b> Always end <code>if</code>, <code>elif</code>, and <code>else</code> with a colon <code>:</code> and indent the next line 4 spaces.",code:'coins = 15\nif coins >= 10:\n    print("Bought Potion!")\nelse:\n    print("Need more coins")'},
-  {fn:"for loop",rules:"<b>Syntax:</b> <code>for i in range(5):</code><br><b>Rule:</b> <code>range(5)</code> counts 0, 1, 2, 3, 4. End the <code>for</code> line with <code>:</code> and indent inside.",code:'for i in range(1, 4):\n    print("Combo hit", i)'},
-  {fn:"def ()",rules:"<b>Syntax:</b> <code>def attack(dmg):</code><br><b>Rule:</b> Functions group reusable code. End <code>def</code> with <code>:</code>, indent the body, and use <code>return</code> to send back a result.",code:'def double_dmg(dmg):\n    return dmg * 2\n\nprint("Critical hit:", double_dmg(35))'},
-  {fn:"dict {}",rules:"<b>Syntax:</b> <code>stats = {\"hp\": 100}</code><br><b>Rule:</b> Store key:value pairs inside curly braces <code>{}</code> and look them up with <code>stats[\"hp\"]</code>.",code:'hero = {"name": "Nova", "lvl": 5}\nprint(hero["name"], "is Level", hero["lvl"])'},
-  {fn:"random",rules:"<b>Syntax:</b> <code>import random</code> then <code>random.randint(1, 6)</code><br><b>Rule:</b> Always import <code>random</code> at the top before rolling numbers.",code:'import random\nroll = random.randint(1, 20)\nprint("D20 Roll:", roll)'},
-  {fn:"turtle",rules:"<b>Syntax:</b> <code>import turtle</code> then <code>t = turtle.Turtle()</code><br><b>Rule:</b> Use <code>t.forward(60)</code>, <code>t.right(90)</code>, and <code>t.color(\"cyan\")</code> to draw on the canvas.",code:'import turtle\nt = turtle.Turtle()\nt.color("cyan")\nfor i in range(4):\n    t.forward(60)\n    t.right(90)'}
+  {fn:"print()",rules:"<b>Syntax:</b> <code>print(a, b)</code><br><b>Rule:</b> Wrap text in quotes <code>\" \"</code>. Separate multiple items with commas.",code:'name = "PyBlocks"\nprint("Welcome to", name, 2026)'},
+  {fn:"variables",rules:"<b>Syntax:</b> <code>hp = 100</code><br><b>Rule:</b> Names can't have spaces or start with a digit. Use <code>+=</code> or <code>-=</code> to update.",code:'hp = 50\nhp += 25\nprint("HP is now:", hp)'},
+  {fn:"// & %",rules:"<b>Syntax:</b> <code>450 // 100</code> and <code>17 % 5</code><br><b>Rule:</b> <code>//</code> (floor division) drops decimals for whole levels; <code>%</code> (modulo) gives the remainder.",code:'xp = 450\nprint("Level:", xp // 100)\nprint("Remainder:", 17 % 5)'},
+  {fn:"if / else",rules:"<b>Syntax:</b> <code>if x &gt;= 10:</code><br><b>Rule:</b> End <code>if</code>, <code>elif</code>, and <code>else</code> with <code>:</code> and indent the next line 4 spaces.",code:'coins = 15\nif coins >= 10:\n    print("Bought Potion!")\nelse:\n    print("Need more coins")'},
+  {fn:"for loop",rules:"<b>Syntax:</b> <code>for i in range(5):</code><br><b>Rule:</b> <code>range(5)</code> counts 0..4; <code>range(1, 6)</code> counts 1..5. Indent inside.",code:'for i in range(1, 4):\n    print("Combo hit", i)'},
+  {fn:"list []",rules:"<b>Syntax:</b> <code>bag = [\"Key\", \"Gem\"]</code><br><b>Rule:</b> Use <code>.append(x)</code> to add, <code>sum(nums)</code> to total, and <code>len(bag)</code> to count.",code:'hits = Array.of(10, 20, 30)\nprint("Total:", sum(hits))'},
+  {fn:"[::-1]",rules:"<b>Syntax:</b> <code>word[::-1]</code><br><b>Rule:</b> Slicing with a <code>-1</code> step walks backwards through a string or list to reverse it.",code:'secret = "SECRET"\nprint(secret[::-1])'},
+  {fn:".join()",rules:"<b>Syntax:</b> <code>\" \".join(items)</code><br><b>Rule:</b> Glues a list or loop of strings together using the separator in front of <code>.join()</code>.",code:'parts = ["SOS", "HELP", "NOW"]\nprint(" - ".join(parts))'},
+  {fn:"min / max",rules:"<b>Syntax:</b> <code>min(100, hp + 30)</code><br><b>Rule:</b> <code>min()</code> picks the smaller value (great for max-HP caps); <code>max()</code> picks the larger value (great for 0 floors).",code:'hp = 85\nprint("Capped HP:", min(100, hp + 30))\nprint("Blocked hit:", max(0, 10 - 25))'},
+  {fn:"chr & ord",rules:"<b>Syntax:</b> <code>ord(\"A\")</code> &rarr; <code>65</code>, <code>chr(65)</code> &rarr; <code>\"A\"</code><br><b>Rule:</b> <code>ord()</code> turns a character into its ASCII number; <code>chr()</code> turns a number back into text.",code:'print("Code for A:", ord("A"))\nprint("Letter 72+73:", chr(72) + chr(73))'},
+  {fn:"def ()",rules:"<b>Syntax:</b> <code>def boost(x):</code><br><b>Rule:</b> End <code>def</code> with <code>:</code>, indent the body, and use <code>return</code> to send back a result.",code:'def double_dmg(dmg):\n    return dmg * 2\nprint("Critical:", double_dmg(35))'},
+  {fn:"dict {}",rules:"<b>Syntax:</b> <code>stats = {\"hp\": 100}</code><br><b>Rule:</b> Store <code>key: value</code> pairs inside <code>{}</code> and read them with <code>stats[\"hp\"]</code>.",code:'hero = {"name": "Nova", "lvl": 5}\nprint(hero["name"], "Lvl", hero["lvl"])'},
+  {fn:"random",rules:"<b>Syntax:</b> <code>import random</code> &rarr; <code>random.randint(1, 6)</code><br><b>Rule:</b> Always import <code>random</code> at the top before rolling numbers.",code:'import random\nprint("D20 Roll:", random.randint(1, 20))'},
+  {fn:"try/except",rules:"<b>Syntax:</b> <code>try: ... except: ...</code><br><b>Rule:</b> Catches runtime errors (like dividing by zero) safely without crashing.",code:'try:\n    print(10 / 0)\nexcept:\n    print("Safe fallback!")'},
+  {fn:"turtle",rules:"<b>Syntax:</b> <code>import turtle</code> &rarr; <code>t = turtle.Turtle()</code><br><b>Rule:</b> Use <code>t.forward(60)</code>, <code>t.right(90)</code>, and <code>t.color(\"cyan\")</code> to draw.",code:'import turtle\nt = turtle.Turtle()\nt.color("cyan")\nfor i in range(4):\n    t.forward(60)\n    t.right(90)'}
 ];
 
 function mkSec(cid,sid,sname,bpName,bpCode,arr){
@@ -238,18 +247,18 @@ const COURSES=[
       ["Poison Tick","Loop 4 ticks dealing 5 dmg to hp=30; print 10",'hp = 30\n','4 * 5 = 20 dmg -> 10 left',o=>o.trim()==="10"],
       ["Mana Cost","If mp>=20 subtract 20 and print Cast (mp=35)",'mp = 35\n','Print Cast and remaining mp 15',o=>o.includes("Cast")&&o.includes("15")],
       ["XP Level","Divide xp=450 // 100 to print Level 4",'xp = 450\n','Use // integer division',o=>o.includes("4")],
-      ["Combo Mult","Loop hits multiplying by 2; print 120",'hits =\n','sum(hits) * 2 = 120',o=>o.trim()==="120"],
+      ["Combo Mult","Loop hits multiplying by 2; print 120",'hits = list((10, 20, 30))\n','sum(hits) * 2 = 120',o=>o.trim()==="120"],
       ["BOSS 2.8: Arena Duel","Simulate 4 attacks of 25 on boss=100; print Victory",'boss = 100\n','When boss <= 0 print Victory',o=>o.includes("Victory")]
     ]),
     ...mkSec(3,3,"Sec 3: Spy Ciphers & Safety","Spy Cipher",'code = {"A":".-","B":"-...","C":"-.-."}\nmsg = "CAB"\nprint(" ".join(code[c] for c in msg))',[
+      ["Mixed Case Fix","Normalize \"sOs\".upper() and print SOS",'raw = "sOs"\n','Use .upper()',o=>o.includes("SOS")],
       ["Reverse Code","Reverse SECRET using [::-1] and print",'s = "SECRET"\n','print(s[::-1])',o=>o.includes("TERCES")],
+      ["Pin Mask","Print \"*\" * 4 + \"1234\"[-2:] -> ****34",'pin = "1234"\n','Slice last 2 digits',o=>o.includes("****34")],
       ["ASCII Shift","Print chr(ord(\"A\") + 3) -> D",'','ord("A")+3 is 68 -> D',o=>o.trim()==="D"],
       ["Caesar Loop","Shift each char in ABC by +1 -> BCD",'w = "ABC"\n','Build shifted string BCD',o=>o.includes("BCD")],
-      ["Morse Lookup","Map SOS with {\"S\":\"...\",\"O\":\"---\"} -> ... --- ...",'m = {"S":"...","O":"---"}\n','Join mapped symbols',o=>o.includes("... --- ...")],
-      ["Pin Mask","Print \"*\" * 4 + \"1234\"[-2:] -> ****34",'pin = "1234"\n','Slice last 2 digits',o=>o.includes("****34")],
+      ["Morse Lookup","Map SOS with {\"S\":\"...\",\"O\":\"---\"} and .join() -> ... --- ...",'m = {"S":"...","O":"---"}\n','Use " ".join(m[c] for c in "SOS")',o=>o.includes("... --- ...")],
       ["Try / Except","Catch 1/0 with try/except and print Safe",'try:\n    x = 1 / 0\nexcept:\n    ','print("Safe")',o=>o.includes("Safe")],
-      ["Mixed Case Fix","Normalize \"sOs\".upper() before lookup; print SOS",'raw = "sOs"\n','Use .upper()',o=>o.includes("SOS")],
-      ["BOSS 3.8: Agent Decoder","Decode with chr() to print HI",'nums =\n','chr(72)+chr(73) == "HI"',o=>o.includes("HI")]
+      ["BOSS 3.8: Agent Decoder","Decode nums with chr() and .join() to print HI",'nums = list((72, 73))\n','"".join(chr(n) for n in nums)',o=>o.includes("HI")]
     ])
   ]},
   {id:4,name:"Course 4: Retro Arcade & Text Adventures",desc:"24 Stages • 3 Section Blueprints",sections:[
@@ -274,8 +283,8 @@ const COURSES=[
       ["BOSS 2.8: Pixel Dodge","Move player from x=0 by +4 twice to dodge laser at x=5; print Safe (8)",'x = 0\n','x += 4 twice -> 8 != 5',o=>o.includes("Safe")&&o.includes("8")]
     ]),
     ...mkSec(4,3,"Sec 3: Scoreboards & Boss Encounters","Arcade Leaderboard",'scores =\nscores.sort(reverse=True)\nfor i, s in enumerate(scores, 1):\n    print(f"#{i}: {s}")',[
-      ["High Score","Print max(scores) (890)",'scores =\n','Use max(scores)',o=>o.trim()==="890"],
-      ["Sort Board","Sort descending and print s (1200)",'s =\n','s.sort(reverse=True); print(s)',o=>o.trim()==="1200"],
+      ["High Score","Print max(scores) (890)",'scores = list((450, 890, 620))\n','Use max(scores)',o=>o.trim()==="890"],
+      ["Sort Board","Sort descending and print first item (1200)",'s = list((300, 1200, 750))\n','s.sort(reverse=True); print(s.pop(0))',o=>o.trim()==="1200"],
       ["Combo Bonus","Base 200 * combo 4 = 800; print Score: 800",'','print("Score:", 200 * 4)',o=>o.includes("Score: 800")],
       ["Rank Badge","If pts>=900 print S else A (pts=950)",'pts = 950\n','Print S',o=>o.trim()==="S"],
       ["Boss Phases","If hp>50 print Phase 1 else Phase 2 (hp=35)",'hp = 35\n','Print Phase 2',o=>o.includes("Phase 2")],
@@ -298,7 +307,7 @@ function applyTheme(){
   r.setProperty("--accent",t.accent);r.setProperty("--accent2",t.accent2);r.setProperty("--text",t.text);
 }
 function showToast(icon,sub,name){
-  document.getElementById("tIcon").textContent=icon;
+    document.getElementById("tIcon").textContent=icon;
   document.getElementById("tSub").textContent=sub;
   document.getElementById("tName").textContent=name;
   const el=document.getElementById("toast");el.classList.add("show");
@@ -312,16 +321,23 @@ function unlockTrophy(id,label){
 }
 
 let curCid=1,curSt=COURSES.at(0).sections.at(0),usedHint=false;
-const SYMS=[["Tab","    "],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
+const SYMS=[["Tab","    "],["⇤ Tab","OUTDENT"],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
 function buildQbar(){
   const qb=document.getElementById("qbar");qb.innerHTML="";
   SYMS.forEach(([lbl,ins])=>{
     const b=document.createElement("button");b.textContent=lbl;
     b.onclick=()=>{
       const ta=document.getElementById("code"),s=ta.selectionStart,e=ta.selectionEnd;
-      ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
-      const pos=ins.length===2&&ins!=="  "?s+1:s+ins.length;
-      ta.focus();ta.setSelectionRange(pos,pos);
+      if(ins==="OUTDENT"){
+        const ls=ta.value.lastIndexOf("\n",s-1)+1;
+        const cut=Math.min(4,ta.value.slice(ls,s).search(/\S|$/));
+        if(cut>0){ta.value=ta.value.slice(0,ls)+ta.value.slice(ls+cut);ta.focus();ta.setSelectionRange(s-cut,s-cut);}
+      }else{
+        ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
+        const pos=ins.length===2&&ins!=="  "?s+1:s+ins.length;
+        ta.focus();ta.setSelectionRange(pos,pos);
+      }
+      if(typeof syncHi==="function")syncHi();
     };
     qb.appendChild(b);
   });
@@ -375,6 +391,8 @@ function loadStage(s){
   document.getElementById("out").textContent="Ready to run...";
   document.getElementById("tcanvas").innerHTML="";
   renderList();
+  const topic=stageTopic(s);
+  document.getElementById("btnStageExp").textContent="📖 Explain: "+topic;
 }
 function useHint(){usedHint=true;document.getElementById("hintTxt").textContent="💡 "+curSt.hint;}
 function resetCode(){document.getElementById("code").value=curSt.starter;}
@@ -424,6 +442,29 @@ function runStage(){
 }
 
 let curExp=EXPLAINS.at(0);
+function stageTopic(s){
+  const txt=s.goal+" "+s.hint+" "+s.starter;
+  if(s.cid===2)return"turtle";
+  if(/\/\/|%/.test(txt))return"// & %";
+  if(/min\(|max\(/.test(txt))return"min / max";
+  if(/\[::-1\]/.test(txt))return"[::-1]";
+  if(/\.join\(/.test(txt))return".join()";
+  if(/chr\(|ord\(/.test(txt))return"chr & ord";
+  if(/try:|except:/.test(txt))return"try/except";
+  if(/random/.test(txt))return"random";
+  if(/dict|\{/.test(txt))return"dict {}";
+  if(/def /.test(txt))return"def ()";
+  if(/list|append|sum\(|sort|bag|scores|hits|nums|loot/.test(txt))return"list []";
+  if(/for |range\(/.test(txt))return"for loop";
+  if(/if |elif |else:|==|>=|<=/.test(txt))return"if / else";
+  if(s.cid===1&&s.sid===2)return"variables";
+  return"print()";
+}
+function openStageExplain(){
+  const topic=stageTopic(curSt);
+  curExp=EXPLAINS.find(x=>x.fn===topic)||EXPLAINS.at(0);
+  openExplain();
+}
 function openExplain(){
   document.getElementById("expModal").classList.add("open");
   const p=document.getElementById("fnPills");p.innerHTML="";
@@ -442,6 +483,24 @@ function runExplain(){
   unlockTrophy("sec_explain","Curious Mind");
   execPy(document.getElementById("expCode").value,document.getElementById("expOut"),null,null);
 }
+
+document.getElementById("code").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    const ta=e.target,s=ta.selectionStart,val=ta.value;
+    const ls=val.lastIndexOf("\n",s-1)+1,line=val.slice(ls,s),tr=line.trim();
+    let base=(line.match(/^\s*/)||Array.of("")).at(0);
+    let prefix=val.slice(0,s);
+    if(/^(else|elif\b.*|except\b.*|finally):$/.test(tr)&&base.length>=4){
+      base=base.slice(4);
+      prefix=val.slice(0,ls)+base+tr;
+    }
+    const nextIndent=base+(tr.endsWith(":")?"    ":"");
+    ta.value=prefix+"\n"+nextIndent+val.slice(ta.selectionEnd);
+    ta.selectionStart=ta.selectionEnd=prefix.length+1+nextIndent.length;
+    if(typeof syncHi==="function")syncHi();
+  }
+});
 
 applyTheme();buildQbar();renderTabs();loadStage(curSt);
 </script>

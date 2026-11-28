@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PyBlocks Studio 2.2 — Free-Build IDE</title>
+<title>PyBlocks Studio 2.3 — Free-Build IDE</title>
 <script src="skulpt.min.js"></script>
 <script src="skulpt-stdlib.js"></script>
 <style>
@@ -52,7 +52,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 <div class="wrap">
   <div class="top">
     <a href="index.html">⬅ Menu</a>
-    <b style="color:var(--accent)">⚡ Free-Build Studio (2.2)</b>
+    <b style="color:var(--accent)">⚡ Free-Build Studio (2.3)</b>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <select id="demoSel" onchange="loadDemo(this.value)">
         <option value="">✨ Load Demo Template...</option>
@@ -110,7 +110,7 @@ pre.term{background:var(--bg);border:1px solid var(--border);border-radius:10px;
 let state=JSON.parse(localStorage.getItem("pbs_v2")||'{"done":[],"xp":0,"trophies":[],"bps":[],"customBps":[],"theme":"macchiato","custom":null}');
 if(!state.bps)state.bps=[];
 if(!state.customBps)state.customBps=[];
-let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.2\\nprint(\\"Hello Studio!\\")\\n"}]');
+let files=JSON.parse(localStorage.getItem("pbs_v2_files")||'[{"name":"main.py","code":"# PyBlocks Studio 2.3\\nprint(\\"Hello Studio!\\")\\n"}]');
 let activeIdx=0;
 const DEMOS={
   mandala:'# Rainbow Mandala Demo\nimport turtle\nt = turtle.Turtle()\nt.speed(0)\ncolors = ["#0284c7", "#db2777", "#d97706", "#16a34a", "#7c3aed"]\nfor i in range(36):\n    t.color(colors[i % 5])\n    t.forward(i * 2)\n    t.right(91)\nprint("Mandala Complete!")\n',
@@ -197,16 +197,23 @@ function loadDemo(k){
   renderTabs();loadFile();document.getElementById("demoSel").value="";
   showToast("✨","Loaded Demo: "+k);
 }
-const SYMS=[["Tab","    "],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
+const SYMS=[["Tab","    "],["⇤ Tab","OUTDENT"],["( )","()"],["[ ]","[]"],["{ }","{}"],['" "','""'],[":",":"],["="," = "]];
 function buildQbar(){
   const qb=document.getElementById("qbar");qb.innerHTML="";
   SYMS.forEach(([lbl,ins])=>{
     const b=document.createElement("button");b.textContent=lbl;
     b.onclick=()=>{
       const ta=document.getElementById("code"),s=ta.selectionStart,e=ta.selectionEnd;
-      ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
-      const pos=ins.length===2&&ins!=="  "?s+1:s+ins.length;
-      ta.focus();ta.setSelectionRange(pos,pos);syncHL();
+      if(ins==="OUTDENT"){
+        const ls=ta.value.lastIndexOf("\n",s-1)+1;
+        const cut=Math.min(4,ta.value.slice(ls,s).search(/\S|$/));
+        if(cut>0){ta.value=ta.value.slice(0,ls)+ta.value.slice(ls+cut);ta.focus();ta.setSelectionRange(s-cut,s-cut);}
+      }else{
+        ta.value=ta.value.slice(0,s)+ins+ta.value.slice(e);
+        const pos=ins.length===2&&ins!=="  "?s+1:s+ins.length;
+        ta.focus();ta.setSelectionRange(pos,pos);
+      }
+      if(typeof syncHi==="function")syncHi();
     };
     qb.appendChild(b);
   });
@@ -299,12 +306,36 @@ function clearOut(){document.getElementById("out").textContent="Output cleared."
 function clearIn(){if(!document.getElementById("code").value||confirm("Clear all code in this file?")){document.getElementById("code").value="";syncHL();showToast("🗑️","Input cleared");}}
 function clearAll(){if(!document.getElementById("code").value||confirm("Clear both code input and output?")){document.getElementById("code").value="";syncHL();clearOut();showToast("💥","Input & output cleared");}}
 function downloadPy(){
-  const f=files[activeIdx];
-  const blob=new Blob([f.code],{type:"text/plain"});
-  const a=document.createElement("a");a.download=f.name;a.href=URL.createObjectURL(blob);a.click();
+  const f=files.find(x=>x.id===curFid)||files.at(0);
+  const code=document.getElementById("code").value;
+  const blob=new Blob(Array.of(code),{type:"text/x-python;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=f.name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  if(navigator.clipboard)navigator.clipboard.writeText(code).catch(()=>{});
   unlockTrophy("code_export","Code Exporter");
-  showToast("💾","Downloaded "+f.name);
+  showToast("⬇️","Downloaded & Copied!",f.name);
 }
+
+document.getElementById("code").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    const ta=e.target,s=ta.selectionStart,val=ta.value;
+    const ls=val.lastIndexOf("\n",s-1)+1,line=val.slice(ls,s),tr=line.trim();
+    let base=(line.match(/^\s*/)||Array.of("")).at(0);
+    let prefix=val.slice(0,s);
+    if(/^(else|elif\b.*|except\b.*|finally):$/.test(tr)&&base.length>=4){
+      base=base.slice(4);
+      prefix=val.slice(0,ls)+base+tr;
+    }
+    const nextIndent=base+(tr.endsWith(":")?"    ":"");
+    ta.value=prefix+"\n"+nextIndent+val.slice(ta.selectionEnd);
+    ta.selectionStart=ta.selectionEnd=prefix.length+1+nextIndent.length;
+    if(typeof syncHi==="function")syncHi();
+  }
+});
 
 applyTheme();buildQbar();renderTabs();loadFile();renderBPs();
 </script>
